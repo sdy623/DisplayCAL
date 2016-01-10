@@ -77,7 +77,7 @@ from edid import WMIError, get_edid
 from jsondict import JSONDict
 from log import DummyLogger, LogFile, get_file_logger, log, safe_print
 import madvr
-from meta import domain, name as appname, version
+from meta import VERSION, VERSION_BASE, domain, name as appname, version
 from options import debug, test, test_require_sensor_cal, verbose
 from ordereddict import OrderedDict
 from patterngenerators import (PrismaPatternGeneratorClient,
@@ -873,7 +873,7 @@ def printcmdline(cmd, args=None, fn=safe_print, cwd=None):
 				   subsequent_indent = "      "))
 
 
-def set_argyll_bin(parent=None):
+def set_argyll_bin(parent=None, silent=False, callafter=None, callafter_args=()):
 	""" Set the directory containing the Argyll CMS binary executables """
 	if parent and not parent.IsShownOnScreen():
 		parent = None # do not center on parent if not visible
@@ -906,6 +906,8 @@ def set_argyll_bin(parent=None):
 			setcfg("argyll.dir", None)
 			return True
 		if dlg_result == wx.ID_CANCEL:
+			if callafter:
+				callafter(*callafter_args)
 			return False
 	else:
 		argyll_dir = None
@@ -921,9 +923,11 @@ def set_argyll_bin(parent=None):
 		if dlg_result == wx.ID_OK:
 			# Download Argyll CMS
 			from DisplayCAL import app_update_check
-			app_update_check(parent, argyll=True)
+			app_update_check(parent, silent, argyll=True)
 			return False
 		elif dlg_result == wx.ID_CANCEL:
+			if callafter:
+				callafter(*callafter_args)
 			return False
 	defaultPath = os.path.join(*get_verified_path("argyll.dir",
 												  path=argyll_dir))
@@ -962,6 +966,8 @@ def set_argyll_bin(parent=None):
 		else:
 			break
 	dlg.Destroy()
+	if not result and callafter:
+		callafter(*callafter_args)
 	return result
 
 
@@ -9966,7 +9972,12 @@ BEGIN_DATA
 		elif result and os.path.isdir(result[0]):
 			setcfg("argyll.dir",
 				   os.path.join(result[0], "bin"))
-			self.owner.set_argyll_bin_handler(None)
+			from DisplayCAL import check_donation
+			snapshot = VERSION > VERSION_BASE
+			self.owner.set_argyll_bin_handler(None, True,
+											  self.owner.check_instrument_setup,
+											  (check_donation, (self.owner,
+																snapshot)))
 		else:
 			show_result_dialog(lang.getstr("error.no_files_extracted_from_archive",
 										   filename), self.owner)

@@ -195,6 +195,10 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 						failure_msg=lang.getstr("update_check.fail"),
 						silent=silent)
 	if resp is False:
+		if silent:
+			# Check if we need to run instrument setup
+			wx.CallAfter(parent.check_instrument_setup, check_donation,
+						 (parent, snapshot))
 		return
 	data = resp.read()
 	if not wx.GetApp():
@@ -238,12 +242,16 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 		if not wx.GetApp():
 			return
 		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog,
-					 snapshot, argyll)
+					 snapshot, argyll, silent)
 	elif not argyll and not snapshot and VERSION > VERSION_BASE:
 		app_update_check(parent, silent, True)
 	elif not argyll:
 		if check_argyll_bin():
 			app_update_check(parent, silent, argyll=True)
+		elif silent:
+			wx.CallAfter(parent.set_argyll_bin_handler, True, silent,
+						 parent.check_instrument_setup, (check_donation,
+														 (parent, snapshot)))
 		else:
 			wx.CallAfter(parent.set_argyll_bin_handler, True)
 	elif not silent:
@@ -288,7 +296,7 @@ def app_uptodate(parent=None):
 
 
 def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
-					   snapshot=False, argyll=False):
+					   snapshot=False, argyll=False, silent=False):
 	""" Show a dialog confirming application update, with cancel option """
 	zeroinstall = (not argyll and
 				   os.path.exists(os.path.normpath(os.path.join(pydir, "..",
@@ -427,6 +435,7 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 								 suffix),),
 						 progress_msg=lang.getstr("downloading"),
 						 fancy=False)
+			return
 	elif result != wx.ID_CANCEL:
 		path = "/"
 		if argyll:
@@ -439,6 +448,9 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 				# Linux
 				path += "-linux"
 		launch_file("http://" + domain + path)
+	if silent:
+		# Check if we need to run instrument setup
+		parent.check_instrument_setup(check_donation, (parent, snapshot))
 
 
 def donation_message(parent=None):
@@ -12376,14 +12388,17 @@ class MainFrame(ReportFrame, BaseFrame):
 			i += 1
 		return self.testchart_names
 
-	def set_argyll_bin_handler(self, event):
+	def set_argyll_bin_handler(self, event, silent=False, callafter=None,
+							   callafter_args=()):
 		""" Set Argyll CMS binary executables directory """
 		if (getattr(self.worker, "thread", None) and
 			self.worker.thread.isAlive()):
 			wx.Bell()
 			return
-		if (event and set_argyll_bin(self)) or (not event and check_argyll_bin()):
-			self.check_update_controls(True) or self.update_menus()
+		if ((event and set_argyll_bin(self, silent, callafter, callafter_args)) or
+			(not event and check_argyll_bin())):
+			self.check_update_controls(True, callafter=callafter,
+									   callafter_args=callafter_args) or self.update_menus()
 			if len(self.worker.displays):
 				if getcfg("calibration.file", False):
 					# Load LUT curves from last used .cal file
@@ -12393,7 +12408,8 @@ class MainFrame(ReportFrame, BaseFrame):
 					# and if it contains curves)
 					self.load_display_profile_cal(None)
 
-	def check_update_controls(self, event=None, silent=False):
+	def check_update_controls(self, event=None, silent=False, callafter=None,
+							  callafter_args=()):
 		"""
 		Update controls and menuitems when changes in displays or instruments
 		are detected.
@@ -12415,7 +12431,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			args = (self.check_update_controls_consumer, 
 					self.check_update_controls_producer)
 			kwargs = dict(cargs=(argyll_bin_dir, argyll_version, displays,
-								 comports, event), wargs=(silent, ),
+								 comports, event, callafter, callafter_args),
+						  wargs=(silent, ),
 						  wkwargs={"enumerate_ports": enumerate_ports})
 			if silent:
 				self.thread = delayedresult.startWorker(*args, **kwargs)
@@ -12430,7 +12447,9 @@ class MainFrame(ReportFrame, BaseFrame):
 													 enumerate_ports=enumerate_ports)
 			return self.check_update_controls_consumer(True, argyll_bin_dir,
 													   argyll_version, displays, 
-													   comports, event)
+													   comports, event,
+													   callafter,
+													   callafter_args)
 
 	def check_update_controls_producer(self, silent=False, enumerate_ports=True):
 		result = self.worker.enumerate_displays_and_ports(silent,
@@ -12469,7 +12488,8 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def check_update_controls_consumer(self, result, argyll_bin_dir,
 									   argyll_version, displays, comports,
-									   event=None):
+									   event=None, callafter=None,
+									   callafter_args=None):
 		if argyll_bin_dir != self.worker.argyll_bin_dir or \
 		   argyll_version != self.worker.argyll_version:
 			self.show_advanced_options_handler()
@@ -12533,8 +12553,12 @@ class MainFrame(ReportFrame, BaseFrame):
 			if self.IsShownOnScreen():
 				self.update_menus()
 			self.update_main_controls()
-			return True
-		return False
+			returnvalue = True
+		else:
+			returnvalue = False
+		if callafter:
+			callafter(*callafter_args)
+		return returnvalue
 
 	def check_instrument_setup(self, callafter=None, callafter_args=()):
 		# Check if we should import colorimeter corrections
