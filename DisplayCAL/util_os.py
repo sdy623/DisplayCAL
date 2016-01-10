@@ -337,10 +337,12 @@ def launch_file(filepath):
 	elif sys.platform == "win32":
 		# for win32, we could use os.startfile, but then we'd not be able
 		# to return exitcode (does it matter?)
+		kwargs = {}
 		kwargs["startupinfo"] = sp.STARTUPINFO()
 		kwargs["startupinfo"].dwFlags |= sp.STARTF_USESHOWWINDOW
 		kwargs["startupinfo"].wShowWindow = sp.SW_HIDE
 		kwargs["shell"] = True
+		kwargs["close_fds"] = True
 		retcode = sp.call('start "" /B "%s"' % filepath, **kwargs)
 	elif which('xdg-open'):
 		retcode = sp.call(['xdg-open', filepath], **kwargs)
