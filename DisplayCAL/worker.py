@@ -6111,13 +6111,13 @@ usage: spotread [-options] [logfile]
 			scut.SetPath(cmd)
 			if len(loader_args) == 1:
 				scut.SetWorkingDirectory(pydir)
-			if cmd != sys.executable:
+			if os.path.basename(cmd) == appname + "-apply-profiles.exe":
 				scut.SetIconLocation(cmd, 0)
 			else:
 				scut.SetIconLocation(get_data_path(os.path.join("theme",
 																"icons", 
 																appname +
-																".ico")), 0)
+																"-apply-profiles.ico")), 0)
 			scut.SetArguments(" ".join(loader_args))
 			scut.SetShowCmd(win32con.SW_SHOWMINNOACTIVE)
 			if is_superuser():
@@ -6168,7 +6168,7 @@ usage: spotread [-options] [logfile]
 			if loader_args:
 				cmdline = '%s" %s "--skip' % (cmd, " ".join(loader_args))
 			else:
-				cmdline = cmd
+				cmdline = '%s" "--skip' % cmd
 			launch_file(cmdline)
 		return result
 	
