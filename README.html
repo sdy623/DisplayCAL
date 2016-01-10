@@ -12,10 +12,10 @@
 		<meta name="description" content="A graphical front-end for display calibration and profiling using Argyll CMS" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="http://displaycal.net/shariff/shariff.complete.css" />
+		<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
 		<link rel="stylesheet" href="theme/readme.css?ts=2015-12-23T03:39" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css?ts=2015-09-01T12:44" />
 		<link rel="stylesheet" href="theme/prism.css" />
-		<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
 		<script type="text/javascript" src="theme/jquery.js"></script>
 		<script type="text/javascript" src="theme/jquery.scrollTo.js"></script>
 		<script type="text/javascript" src="theme/jquery.localscroll.js"></script>
@@ -47,8 +47,8 @@
 		<div id="intro">
 			<div id="friendlybox">
 				<div id="get">
-					<h2 id="version">3.1 Beta</h2>
-					<p>2016-01-09 21:36 UTC</p>
+					<h2 id="version">3.1 </h2>
+					<p>2016-01-10 19:59 UTC</p>
 					<ul>
 						<li class="download"><a href="#download">Get DisplayCAL</a></li>
 						<li class="requirements"><a href="#requirements">System requirements</a></li>
@@ -2439,11 +2439,18 @@ Dilma Herrera</span></p>
 
 		<div id="changelog">
 			<h2>Version history / changelog</h2>
-			<!-- 2016-01-09 21:36 (UTC) 3.1 Beta -->
+			<!-- 2016-01-10 19:59 (UTC) 3.1  -->
 			<dl>
-				<dt id="changelog-3.1">2016-01-09 21:36 (UTC) 3.1 Beta</dt>
+				<dt id="changelog-3.1">2016-01-10 19:59 (UTC) 3.1 </dt>
 					<dd>
-						<h3>3.1 Beta</h3>
+						<h3>3.1 </h3>
+
+						<h4>dispcalGUI has been rebranded as DisplayCAL.</h4>
+
+						<p><strong>Linux 0install users:</strong> It is recommended that you download the respective <a href="http://displaycal.net/#download">DisplayCAL-0install package</a> for your distribution and install it so that the applications in the menu of your desktop environment are updated properly.</p>
+
+						<p><strong>Mac OS X 0install users:</strong> It is recommended that you move existing dispcalGUI application icons to the trash, then download the <a href="http://displaycal.net/download/DisplayCAL-0install.dmg">DisplayCAL-0install.dmg</a> disk image to get updated applications.</p>
+
 						<h4>Added in this release:</h4>
 						<ul>
 							<li><strong>HiDPI support (Windows/Linux).</strong> Icons will be scaled according to the scaling factor or DPI set in the display settings under Windows, or the respective font scaling or DPI system setting under Linux. Icons will be scaled down or up from their 2x version if a matching size is not available. Note that if you run a multi-monitor configuration, the application is system-DPI aware but not per-monitor-DPI aware, which is a limitation of wxPython/wxWidgets (under Windows, you will need to log out and back in after changing DPI settings for changes to take effect in DisplayCAL).</li>
@@ -2453,7 +2460,6 @@ Dilma Herrera</span></p>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
-							<li><strong>dispcalGUI has been rebranded as DisplayCAL.</strong></li>
 							<li>Changed default calibration speed from “Medium” to “Fast”. Typically this cuts calibration time in half, while the accuracy difference is negligible at below 0.2 delta E.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>

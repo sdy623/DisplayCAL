@@ -2444,6 +2444,13 @@ Dilma Herrera</span></p>
 				<dt id="changelog-${VERSION_SHORT}">${ISODATE} ${ISOTIME} (UTC) ${VERSION_SHORT} ${STABILITY}</dt>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
+
+						<h4>dispcalGUI has been rebranded as ${APPNAME}.</h4>
+
+						<p><strong>Linux 0install users:</strong> It is recommended that you download the respective <a href="${URL}#download">${APPNAME}-0install package</a> for your distribution and install it so that the applications in the menu of your desktop environment are updated properly.</p>
+
+						<p><strong>Mac OS X 0install users:</strong> It is recommended that you move existing dispcalGUI application icons to the trash, then download the <a href="${URL}download/${APPNAME}-0install.dmg">${APPNAME}-0install.dmg</a> disk image to get updated applications.</p>
+
 						<h4>Added in this release:</h4>
 						<ul>
 							<li><strong>HiDPI support (Windows/Linux).</strong> Icons will be scaled according to the scaling factor or DPI set in the display settings under Windows, or the respective font scaling or DPI system setting under Linux. Icons will be scaled down or up from their 2x version if a matching size is not available. Note that if you run a multi-monitor configuration, the application is system-DPI aware but not per-monitor-DPI aware, which is a limitation of wxPython/wxWidgets (under Windows, you will need to log out and back in after changing DPI settings for changes to take effect in ${APPNAME}).</li>
@@ -2453,7 +2460,6 @@ Dilma Herrera</span></p>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
-							<li><strong>dispcalGUI has been rebranded as ${APPNAME}.</strong></li>
 							<li>Changed default calibration speed from “Medium” to “Fast”. Typically this cuts calibration time in half, while the accuracy difference is negligible at below 0.2 delta E.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>
