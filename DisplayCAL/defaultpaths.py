@@ -11,13 +11,16 @@ if sys.platform == "win32":
 											 CSIDL_COMMON_STARTUP, 
 											 CSIDL_LOCAL_APPDATA,
 											 CSIDL_PROFILE,
+											 CSIDL_PROGRAMS,
+											 CSIDL_COMMON_PROGRAMS,
 											 CSIDL_PROGRAM_FILES_COMMON, 
 											 CSIDL_STARTUP, CSIDL_SYSTEM)
 	except ImportError:
 		import ctypes
 		(CSIDL_APPDATA, CSIDL_COMMON_APPDATA, CSIDL_COMMON_STARTUP, 
-		 CSIDL_LOCAL_APPDATA, CSIDL_PROFILE, CSIDL_PROGRAM_FILES_COMMON,
-		 CSIDL_STARTUP, CSIDL_SYSTEM) = (26, 35, 24, 28, 40, 43, 7, 37)
+		 CSIDL_LOCAL_APPDATA, CSIDL_PROFILE, CSIDL_PROGRAMS,
+		 CSIDL_COMMON_PROGRAMS, CSIDL_PROGRAM_FILES_COMMON,
+		 CSIDL_STARTUP, CSIDL_SYSTEM) = (26, 35, 24, 28, 40, 43, 2, 23, 7, 37)
 		MAX_PATH = 260
 		def SHGetSpecialFolderPath(hwndOwner, nFolder, create=0):
 			""" ctypes wrapper around shell32.SHGetSpecialFolderPathW """
@@ -77,6 +80,14 @@ if sys.platform == "win32":
 		raise Exception("FATAL - Could not get system folder: %s"
 						% exception)
 	iccprofiles_home = iccprofiles
+	try:
+		programs = SHGetSpecialFolderPath(0, CSIDL_PROGRAMS, 1)
+	except Exception, exception:
+		programs = None
+	try:
+		commonprograms = [SHGetSpecialFolderPath(0, CSIDL_COMMON_PROGRAMS, 1)]
+	except Exception, exception:
+		commonprograms = []
 elif sys.platform == "darwin":
 	library_home = os.path.join(home, "Library")
 	cache = os.path.join(library_home, "Caches")
@@ -92,6 +103,8 @@ elif sys.platform == "darwin":
 								"Profiles")]
 	iccprofiles_home = [os.path.join(home, "Library", "ColorSync", 
 									 "Profiles")]
+	programs = os.path.join(os.path.sep, "Applications")
+	commonprograms = []
 else:
 	cache = xdg_cache_home = getenvu("XDG_CACHE_HOME",
 									 expandvarsu("$HOME/.cache"))
@@ -129,6 +142,9 @@ else:
 	iccprofiles_home = [os.path.join(xdg_data_home, "color", "icc"), 
 						os.path.join(xdg_data_home, "icc"), 
 						expandvarsu("$HOME/.color/icc")]
+	programs = os.path.join(xdg_data_home, "applications")
+	commonprograms = [os.path.join(dir_, "applications")
+					  for dir_ in xdg_data_dirs]
 if sys.platform in ("darwin", "win32"):
 	iccprofiles_display = iccprofiles
 	iccprofiles_display_home = iccprofiles_home
