@@ -756,10 +756,10 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 
 def upload_colorimeter_correction(parent=None, params=None):
 	""" Upload colorimeter correction to online database """
-	path = "/colorimetercorrections/index.php"
+	path = "/index.php"
 	failure_msg = lang.getstr("colorimeter_correction.upload.failure")
 	# Check for duplicate
-	resp = http_request(parent, domain, "GET", path,
+	resp = http_request(parent, "colorimetercorrections." + domain, "GET", path,
 						# Remove CREATED date for calculating hash
 						{"get": True, "hash": md5(re.sub('\nCREATED\s+".+?"\n', "\n\n",
 														 safe_str(params['cgats'],
@@ -8905,8 +8905,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.worker.start(colorimeter_correction_web_check_choose, 
 						  http_request, 
 						  ckwargs={"parent": self}, 
-						  wargs=(self, domain, "GET",
-								 "/colorimetercorrections/index.php", params),
+						  wargs=(self, "colorimetercorrections." + domain, "GET",
+								 "/index.php", params),
 						  progress_msg=lang.getstr("colorimeter_correction.web_check"),
 						  stop_timers=False, cancelable=False,
 						  show_remaining_time=False, fancy=False)
