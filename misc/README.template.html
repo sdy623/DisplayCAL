@@ -12,6 +12,7 @@
 		<meta name="description" content="${SUMMARY}" />
 		<link rel="shortcut icon" href="theme/icons/favicon.ico" type="image/x-icon" />
 		<link rel="stylesheet" href="${URL}shariff/shariff.complete.css" />
+		<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Lato%3A400%2C700%2C900%2C400italic%2C700italic&#038;subset=latin%2Clatin-ext" type="text/css" media="all" />
 		<link rel="stylesheet" href="theme/readme.css?ts=2015-12-23T03:39" />
 		<link rel="stylesheet" href="theme/slimbox2/slimbox2.css?ts=2015-09-01T12:44" />
 		<link rel="stylesheet" href="theme/prism.css" />
@@ -26,9 +27,18 @@
 		<div id="header">
 			<div id="title-wrapper">
 				<div id="title">
-					<h1><img src="theme/icon-reflection.png" alt="" /> <a href="${URL}">${APPNAME}</a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
+					<h1><img src="theme/icon-reflection.png" alt="" /> <a href="${URL}">${APPNAME_HTML}</a><span><span class="dash">—</span>Open Source Display Calibration and Characterization powered by <a href="http://argyllcms.com">Argyll CMS</a></span></h1>
 
 					<p class="shariff" data-lang="en" data-services="[&quot;facebook&quot;,&quot;googleplus&quot;,&quot;linkedin&quot;,&quot;twitter&quot;,&quot;info&quot;]" data-theme="white" data-backend-url="${URL}shariff/index.php" data-url="${URL}" data-info-url="https://github.com/heiseonline/shariff"></p>
+				</div>
+
+				<div id="site-navigation">
+					<ul>
+						<li><a href="${URL}news/">News</a></li>
+						<li><a href="${URL}forums/">Forums</a></li>
+						<li><a href="${URL}issues/">Issue Tracker</a></li>
+						<li><a href="${URL}wiki/">Wiki</a></li>
+					</ul>
 				</div>
 			</div>
 			<div id="header-inner-overlay"></div>
@@ -58,10 +68,6 @@
 			<p id="teaser">
 				<a href="#screenshots" title="View screenshots"><img src="theme/${APPNAME}-adjust-reflection.png" alt="" /></a>
 			</p>
-		</div>
-
-		<div id="infobox">
-			<p id="info">Stay up-to-date and be notified of new releases by signing up to the <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-news" title="dispcalgui-news mailing list">dispcalgui-news</a> mailing list (unless you're already subscribed to <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users" title="dispcalgui-users mailing list">dispcalgui-users</a> which also receives new release notifications).</p>
 		</div>
 
 		<div id="donation-box">
@@ -124,7 +130,7 @@
 				})();
 				//]]>
 			</script>
-			<span>(For other means of contributing, please contact me under <a>${APPNAME_LOWER} ‹at› hoech . net</a>)</span>
+			<span>(For other means of contributing, please contact me under <a>florian ‹at› displaycal . net</a>)</span>
 			</div>
 		</div>
 
@@ -257,8 +263,8 @@
 					<span><a href="screenshots/${APPNAME}-screenshot-Mac.png" class="imagelink" data-lightbox="lightbox-set" title="${APPNAME} running under Mac OS X"><img src="screenshots/${APPNAME}-screenshot-Mac-thumb.png" alt="" class="opaque" /></a><br />
 					<small>Mac OS X</small><br /></span>
 
-					<span><a href="screenshots/${APPNAME}-screenshot-Win7.png" class="imagelink" data-lightbox="lightbox-set" title="${APPNAME} running under Windows 7"><img src="screenshots/${APPNAME}-screenshot-Win7-thumb.png" alt="" class="opaque" /></a><br />
-					<small>Windows 7</small><br /></span>
+					<span><a href="screenshots/${APPNAME}-screenshot-Win10.png" class="imagelink" data-lightbox="lightbox-set" title="${APPNAME} running under Windows 10"><img src="screenshots/${APPNAME}-screenshot-Win10-thumb.png" alt="" class="opaque" /></a><br />
+					<small>Windows 10</small><br /></span>
 				</p>
 			</div>
 		</div>
@@ -619,7 +625,7 @@
 						<p>You need to have a working Python installation and all <a href="#requirements-source">requirements</a>.</p>
 						<p><a href="${URL}download/${APPNAME}.tar.gz">Source Tarball</a></p>
 						<p>
-							Alternatively, if you don't mind trying out development code, <a href="http://sourceforge.net/p/dispcalgui/code/">browse the </a><abbr title="Subversion"><a href="http://sourceforge.net/p/dispcalgui/code/">SVN</a><sup><a href="#definition_SVN">[8]</a></sup></abbr><a href="http://sourceforge.net/p/dispcalgui/code/"> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk dispcalgui</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
+							Alternatively, if you don't mind trying out development code, <a href="http://sourceforge.net/p/dispcalgui/code/">browse the </a><abbr title="Subversion"><a href="http://sourceforge.net/p/dispcalgui/code/">SVN</a><sup><a href="#definition_SVN">[8]</a></sup></abbr><a href="http://sourceforge.net/p/dispcalgui/code/"> repository of the latest development version</a> (or do a full checkout using <code>svn checkout svn://svn.code.sf.net/p/dispcalgui/code/trunk ${APPNAME}</code>). But please note that the development code might contain bugs or not run at all, or only on some platform(s). Use at your own risk. 
 						</p>
 					</div>
 				</li>
@@ -2134,7 +2140,7 @@ with DCGScriptingClientSocket() as client:
 		<div id="userdata">
 			<h2>User data and configuration file locations</h2>
 			
-			<p>${APPNAME} uses the following folders for configuration, logfiles and storage (the storage directory is configurable).</p>
+			<p>${APPNAME} uses the following folders for configuration, logfiles and storage (the storage directory is configurable). <strong>Note</strong> that if you have upgraded to ${APPNAME} from dispcalGUI, that ${APPNAME} will continue to use the existing dispcalGUI directories and configuration file names (so replace ${APPNAME} with dispcalGUI in the lists below).</p>
 			
 			<h3 id="configuration">Configuration</h3>
 			<ul>
@@ -2283,7 +2289,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 
 			<ul>
 				<li><a href="${URL}forums/forum/help-and-support/">Help &amp; support forum</a></li>
-				<li><a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">${APPNAME}-users mailing list</a></li>
+				<li><a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">dispcalgui-users mailing list</a></li>
 				<li>Contact me directly via E-Mail: <a>${APPNAME} ‹at› hoech . net</a> (but keep in mind other users may also benefit from exchanges, so I'm encouraging the use one of the above channels if possible)</li>
 			</ul>
 		</div>
@@ -2297,7 +2303,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			<ul>
 				<li>Try to give a <strong>short, but concise summary of the problem</strong>.</li>
 				<li>Try to give some <strong>steps to reproduce the problem</strong>.</li>
-				<li>Always <strong>attach logfiles</strong> if possible. They are usually automatically created by ${APPNAME} as part of normal program operation. You can find them here:
+				<li>Always <strong>attach logfiles</strong> if possible. They are usually automatically created by ${APPNAME} as part of normal program operation. The easiest way to do that is to choose “Show log” from the “Tools” menu and then click the “Create compressed archive...” button (<strong>not</strong> the “Save as...” button as this will only save the session log) on the log window. You can also find the logfiles here:
 					<ul>
 						<li>Linux:
 							<samp>/home/<var>Your Username</var>/.local/share/${APPNAME}/logs</samp></li>
@@ -2321,7 +2327,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 		<div id="discuss">
 			<h2>Discussion</h2>
 
-			<p>Do you want to get in touch with me or other users regarding ${APPNAME} or related topics? The <a href="${URL}forums/forum/general-discussion/">general discussion forum</a> or <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">${APPNAME}-users mailing list</a> is a good place to do so. You can also contact me directly via E-Mail: <a>${APPNAME_LOWER} ‹at› hoech . net</a>.</p>
+			<p>Do you want to get in touch with me or other users regarding ${APPNAME} or related topics? The <a href="${URL}forums/forum/general-discussion/">general discussion forum</a> or <a href="https://lists.sourceforge.net/lists/listinfo/dispcalgui-users">dispcalgui-users mailing list</a> is a good place to do so. You can also contact me directly via E-Mail: <a>${APPNAME_LOWER} ‹at› hoech . net</a>.</p>
 		</div>
 
 		<div id="todo">
@@ -2385,7 +2391,7 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			Roberto Quintero (spanish translation),
 			Tommaso Schiavinotto (italian translation)</p>
 
-			<p>Recent donors:
+			<p>Recent contributors:
 Jürgen Gallus,
 Jonas Wagner,
 Mind On Photography LLC,
@@ -2440,13 +2446,14 @@ Dilma Herrera</span></p>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
 						<h4>Added in this release:</h4>
 						<ul>
-							<li>HiDPI support (Windows/Linux). Icons will be scaled according to the scaling factor or DPI set in the display settings under Windows, or the respective font scaling or DPI system setting under Linux. Icons will be scaled down or up from their 2x version if a matching size is not available. Note that if you run a multi-monitor configuration, the application is system-DPI aware but not per-monitor-DPI aware, which is a limitation of wxPython/wxWidgets (under Windows, you will need to log out and back in after changing DPI settings for changes to take effect in ${APPNAME}).</li>
+							<li><strong>HiDPI support (Windows/Linux).</strong> Icons will be scaled according to the scaling factor or DPI set in the display settings under Windows, or the respective font scaling or DPI system setting under Linux. Icons will be scaled down or up from their 2x version if a matching size is not available. Note that if you run a multi-monitor configuration, the application is system-DPI aware but not per-monitor-DPI aware, which is a limitation of wxPython/wxWidgets (under Windows, you will need to log out and back in after changing DPI settings for changes to take effect in ${APPNAME}).</li>
 							<li>When having created a compressed archive of a profile and related files, it can now also be imported back in via drag'n'drop or the “Load settings...” menu entry and respective button.</li>
 							<li>Argyll CMS can be automatically downloaded and updated.</li>
-							<li>Windows: The profile loader will stay in the taskbar tray and automatically reload calibration if the display configuration changes.</li>
+							<li><strong>Windows: New profile loader.</strong> It will stay in the taskbar tray and automatically reload calibration if the display configuration changes.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
+							<li><strong>dispcalGUI has been rebranded as ${APPNAME}.</strong></li>
 							<li>Changed default calibration speed from “Medium” to “Fast”. Typically this cuts calibration time in half, while the accuracy difference is negligible at below 0.2 delta E.</li>
 						</ul>
 						<h4>Fixed in this release:</h4>

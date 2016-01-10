@@ -176,7 +176,7 @@ jQuery(function ($) {
 				});
 			}, 500);
 		}
-		imgpaths.push('img/dispcalGUI-main_window-shadow-720.png');
+		imgpaths.push('img/DisplayCAL-main_window-shadow-720.png');
 		/* Load images */
 		var protocol = location.protocol;
 		if (protocol == 'file:') protocol = 'http:';
@@ -184,7 +184,7 @@ jQuery(function ($) {
 			img = new Image();
 			imgs.push(img);
 			img.onload = splash_onload;
-			img.src = protocol + '//dispcalgui.hoech.net/' + imgpaths[i];
+			img.src = protocol + '//displaycal.net/' + imgpaths[i];
 		}
 	}
 	
@@ -192,10 +192,10 @@ jQuery(function ($) {
 	var interval = setInterval(function () {
 		jQuery('#teaser img').fadeOut(750, function () {
 			var src;
-			if (jQuery('#teaser img').attr('src').indexOf('theme/dispcalGUI-adjust-reflection.png') > -1)
-				src = 'theme/dispcalGUI-main_window-reflection.png';
+			if (jQuery('#teaser img').attr('src').indexOf('theme/DisplayCAL-adjust-reflection.png') > -1)
+				src = 'theme/DisplayCAL-main_window-reflection.png';
 			else
-				src = 'theme/dispcalGUI-adjust-reflection.png';
+				src = 'theme/DisplayCAL-adjust-reflection.png';
 			jQuery('#teaser img').attr('src', src).fadeIn(750);
 		});
 	}, 10000);
@@ -203,7 +203,7 @@ jQuery(function ($) {
 	/* Insert facebook page link into shariff bar */
 	$('.shariff > ul').removeClass('col-5');
 	$('.shariff > ul').addClass('col-6');
-	$('.shariff > ul').prepend('<li class="shariff-button facebook info"><a title="Visit dispcalGUI on Facebook" target="_blank" href="https://www.facebook.com/dispcalGUI/"><span class="fa fa-facebook" style="width: 23px"></span></a></li>');
+	$('.shariff > ul').prepend('<li class="shariff-button facebook info"><a title="Visit DisplayCAL on Facebook" target="_blank" href="https://www.facebook.com/DisplayCAL/"><span class="fa fa-facebook" style="width: 23px"></span></a></li>');
 
 	/* Only show 'to top' link if scroll position > ToC offset top */
 	var totop_isshown = false;
@@ -227,8 +227,8 @@ jQuery(window).load(function () {
 	
 	/* Teaser */
 	setTimeout(function () {
-		var src = ['theme/dispcalGUI-main_window-reflection.png',
-				   'theme/dispcalGUI-adjust-reflection.png'][Math.round(Math.random())];
+		var src = ['theme/DisplayCAL-main_window-reflection.png',
+				   'theme/DisplayCAL-adjust-reflection.png'][Math.round(Math.random())];
 		jQuery('#teaser img').attr('src', src).fadeIn(750);
 	}, 500);
 });

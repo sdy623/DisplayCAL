@@ -1,6 +1,6 @@
 # Maintainer: ${MAINTAINER} <${MAINTAINER_EMAIL}>
 
-pkgname=dispcalgui-0install
+pkgname=${APPNAME_LOWER}-0install
 _pkgname=${PACKAGE}
 pkgver=${VERSION}
 pkgrel=1
@@ -11,7 +11,7 @@ license=('GPL3')
 makedepends=('python2>=${PY_MINVERSION}')
 depends=('python2>=${PY_MINVERSION}' 'wxpython>=${WX_MINVERSION}' 'python2-numpy' 'python2-pygame' 'desktop-file-utils' 'hicolor-icon-theme' 'xdg-utils' 'zeroinstall-injector')
 optdepends=('argyllcms: calibration & profiling support')
-conflicts=('dispcalgui')
+conflicts=('dispcalgui' 'dispcalgui-0install' '${APPNAME_LOWER}')
 install=${pkgname}.install
 
 source=("${URL}download/${_pkgname}-${pkgver}.tar.gz")
