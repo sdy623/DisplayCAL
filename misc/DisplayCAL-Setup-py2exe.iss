@@ -7,29 +7,29 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppID={{4714199A-0D66-4E69-97FF-7B54BFF80B88}
 AppCopyright=%(AppCopyright)s
-AppName=%(AppName)
-AppVerName=%(AppName) %(AppVerName)s
+AppName=%(AppName)s
+AppVerName=%(AppName)s %(AppVerName)s
 AppPublisher=%(AppPublisher)s
 AppPublisherURL=%(AppPublisherURL)s
 AppReadmeFile={app}\README.html
 AppSupportURL=%(AppSupportURL)s
 AppUpdatesURL=%(AppUpdatesURL)s
-DefaultDirName={pf}\%(AppName)
-DefaultGroupName=%(AppName)
+DefaultDirName={pf}\%(AppName)s
+DefaultGroupName=%(AppName)s
 LicenseFile=..\LICENSE.txt
 OutputDir=.
-OutputBaseFilename=%(AppName)-%(AppVersion)s-Setup
-SetupIconFile=..\%(AppName)\theme\icons\%(AppName).ico
+OutputBaseFilename=%(AppName)s-%(AppVersion)s-Setup
+SetupIconFile=..\%(AppName)s\theme\icons\%(AppName)s.ico
 Compression=lzma/Max
 SolidCompression=true
 VersionInfoVersion=%(VersionInfoVersion)s
-VersionInfoDescription=%(AppName) Setup
+VersionInfoDescription=%(AppName)s Setup
 VersionInfoTextVersion=%(VersionInfoTextVersion)s
 WizardImageFile=..\misc\media\install.bmp
 WizardSmallImageFile=..\misc\media\icon-install.bmp
 AppVersion=%(AppVersion)s
-UninstallDisplayName={cm:UninstallProgram,%(AppName)}
-UninstallDisplayIcon={app}\theme\icons\%(AppName)-uninstall.ico
+UninstallDisplayName={cm:UninstallProgram,%(AppName)s}
+UninstallDisplayIcon={app}\theme\icons\%(AppName)s-uninstall.ico
 AlwaysShowComponentsList=false
 ShowLanguageDialog=auto
 MinVersion=0,5.1.2600
@@ -48,34 +48,34 @@ Name: calibrationloadinghandledbydisplaycal; Description: {cm:CalibrationLoading
 Name: calibrationloadinghandledbyos; Description: {cm:CalibrationLoadingHandledByOS}; Flags: exclusive unchecked; GroupDescription: {cm:CalibrationLoading}; MinVersion: 0,6.1.7600; 
 
 [Files]
-Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)-%(AppVersion)s\*; DestDir: {app}; Flags: recursesubdirs replacesameversion; Excludes: \%(AppName).exe,\README.html; 
-Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)-%(AppVersion)s\%(AppName).exe; DestDir: {app}; Flags: replacesameversion; 
-Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)-%(AppVersion)s\README.html; DestDir: {app}; Flags: isreadme; 
+Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\*; DestDir: {app}; Flags: recursesubdirs replacesameversion; Excludes: \%(AppName)s.exe,\README.html; 
+Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\%(AppName)s.exe; DestDir: {app}; Flags: replacesameversion; 
+Source: py2exe.%(Platform)s-py%(PythonVersion)s\%(AppName)s-%(AppVersion)s\README.html; DestDir: {app}; Flags: isreadme; 
 Source: SetACL.exe; DestDir: {tmp}; Flags: deleteafterinstall overwritereadonly; 
 
 [Icons]
-Name: {group}\%(AppName); Filename: {app}\%(AppName).exe; IconFilename: {app}\%(AppName).exe
-Name: "{group}\%(AppName) Profile Loader"; Filename: {app}\%(AppName)-apply-profiles.exe; Parameters: --force; IconFilename: {app}\%(AppName)-apply-profiles.exe; 
-Name: "{group}\3DLUT Maker"; Filename: {app}\%(AppName)-3DLUT-maker.exe; IconFilename: {app}\%(AppName)-3DLUT-maker.exe; 
-Name: "{group}\Curve Viewer"; Filename: {app}\%(AppName)-curve-viewer.exe; IconFilename: {app}\%(AppName)-curve-viewer.exe; 
-Name: "{group}\Profile Info"; Filename: {app}\%(AppName)-profile-info.exe; IconFilename: {app}\%(AppName)-profile-info.exe; 
-Name: "{group}\Synthetic Profile Creator"; Filename: {app}\%(AppName)-synthprofile.exe; IconFilename: {app}\%(AppName)-synthprofile.exe; 
-Name: "{group}\Scripting Client"; Filename: {app}\%(AppName)-scripting-client.exe; IconFilename: {app}\%(AppName)-scripting-client.exe; 
-Name: "{group}\Testchart Editor"; Filename: {app}\%(AppName)-testchart-editor.exe; IconFilename: {app}\%(AppName)-testchart-editor.exe; 
-Name: "{group}\VRML to X3D converter"; Filename: {app}\%(AppName)-VRML-to-X3D-converter.exe; IconFilename: {app}\%(AppName)-VRML-to-X3D-converter.exe; 
-Name: {group}\{cm:UninstallProgram,%(AppName)}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\%(AppName)-uninstall.ico; Tasks: ; Languages: 
-Name: {commondesktop}\%(AppName); Filename: {app}\%(AppName).exe; Tasks: desktopicon; IconFilename: {app}\%(AppName).exe
-Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\%(AppName); Filename: {app}\%(AppName).exe; Tasks: quicklaunchicon; IconFilename: {app}\%(AppName).exe
+Name: {group}\%(AppName)s; Filename: {app}\%(AppName)s.exe; IconFilename: {app}\%(AppName)s.exe
+Name: "{group}\%(AppName)s Profile Loader"; Filename: {app}\%(AppName)s-apply-profiles.exe; Parameters: --force; IconFilename: {app}\%(AppName)s-apply-profiles.exe; 
+Name: "{group}\3DLUT Maker"; Filename: {app}\%(AppName)s-3DLUT-maker.exe; IconFilename: {app}\%(AppName)s-3DLUT-maker.exe; 
+Name: "{group}\Curve Viewer"; Filename: {app}\%(AppName)s-curve-viewer.exe; IconFilename: {app}\%(AppName)s-curve-viewer.exe; 
+Name: "{group}\Profile Info"; Filename: {app}\%(AppName)s-profile-info.exe; IconFilename: {app}\%(AppName)s-profile-info.exe; 
+Name: "{group}\Synthetic Profile Creator"; Filename: {app}\%(AppName)s-synthprofile.exe; IconFilename: {app}\%(AppName)s-synthprofile.exe; 
+Name: "{group}\Scripting Client"; Filename: {app}\%(AppName)s-scripting-client.exe; IconFilename: {app}\%(AppName)s-scripting-client.exe; 
+Name: "{group}\Testchart Editor"; Filename: {app}\%(AppName)s-testchart-editor.exe; IconFilename: {app}\%(AppName)s-testchart-editor.exe; 
+Name: "{group}\VRML to X3D converter"; Filename: {app}\%(AppName)s-VRML-to-X3D-converter.exe; IconFilename: {app}\%(AppName)s-VRML-to-X3D-converter.exe; 
+Name: {group}\{cm:UninstallProgram,%(AppName)s}; Filename: {uninstallexe}; IconFilename: {app}\theme\icons\%(AppName)s-uninstall.ico; Tasks: ; Languages: 
+Name: {commondesktop}\%(AppName)s; Filename: {app}\%(AppName)s.exe; Tasks: desktopicon; IconFilename: {app}\%(AppName)s.exe
+Name: {userappdata}\Microsoft\Internet Explorer\Quick Launch\%(AppName)s; Filename: {app}\%(AppName)s.exe; Tasks: quicklaunchicon; IconFilename: {app}\%(AppName)s.exe
 Name: {group}\LICENSE; Filename: {app}\LICENSE.txt
 Name: {group}\README; Filename: {app}\README.html; Tasks: ; Languages: 
-Name: "{commonstartup}\%(AppName) Profile Loader"; Filename: {app}\%(AppName)-apply-profiles.exe; Tasks: calibrationloadinghandledbydisplaycal; 
+Name: "{commonstartup}\%(AppName)s Profile Loader"; Filename: {app}\%(AppName)s-apply-profiles.exe; Tasks: calibrationloadinghandledbydisplaycal; 
 
 [Run]
-Filename: {app}\%(AppName).exe; Description: {cm:LaunchProgram,%(AppName)}; Flags: nowait postinstall skipifsilent;
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName) -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden; 
-Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName) -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden; 
-Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName) import util_win; None if not util_win.calibration_management_isenabled() else util_win.disable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByDisplayCAL}; Tasks: calibrationloadinghandledbydisplaycal; 
-MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName) import util_win; None if util_win.calibration_management_isenabled() else util_win.enable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByOS}; Tasks: calibrationloadinghandledbyos; 
+Filename: {app}\%(AppName)s.exe; Description: {cm:LaunchProgram,%(AppName)s}; Flags: nowait postinstall skipifsilent;
+Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:read_ex;s:y;i:sc,so;m:set;w:dacl"""; Flags: RunHidden; 
+Filename: {tmp}\SetACL.exe; Parameters: "-on {commonappdata}\%(AppName)s -ot file -actn ace -ace ""n:S-1-5-32-545;p:write;s:y;i:io,sc,so;m:grant;w:dacl"""; Flags: RunHidden; 
+Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if not util_win.calibration_management_isenabled() else util_win.disable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByDisplayCAL}; Tasks: calibrationloadinghandledbydisplaycal; 
+MinVersion: 0,6.1.7600; Filename: {app}\lib\python.exe; Parameters: "-S -c ""import sys; sys.path.insert(0, '\\'.join(sys.executable.replace('/', '\\').split('\\')[:-1]) + '\\library.zip'); from %(AppName)s import util_win; None if util_win.calibration_management_isenabled() else util_win.enable_calibration_management();"""; Flags: RunHidden RunAsCurrentUser; Description: {cm:CalibrationLoadingHandledByOS}; Tasks: calibrationloadinghandledbyos; 
 
 [Dirs]
-Name: {commonappdata}\%(AppName); Permissions: users-modify;
+Name: {commonappdata}\%(AppName)s; Permissions: users-modify;

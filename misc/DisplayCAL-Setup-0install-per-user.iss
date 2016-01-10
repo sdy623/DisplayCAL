@@ -9,28 +9,28 @@
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
 AppID={{4714199A-0D66-4E69-97FF-7B54BFF80B88}
 AppCopyright=%(AppCopyright)s
-AppName=%(AppName)
+AppName=%(AppName)s
 AppPublisher=%(AppPublisher)s
 AppPublisherURL=%(AppPublisherURL)s
 AppReadmeFile=%(URL)s
 AppSupportURL=%(AppSupportURL)s
 AppUpdatesURL=%(AppUpdatesURL)s
-DefaultDirName={userpf}\%(AppName)
-DefaultGroupName=%(AppName)
+DefaultDirName={userpf}\%(AppName)s
+DefaultGroupName=%(AppName)s
 LicenseFile=..\LICENSE.txt
 OutputDir=.
-OutputBaseFilename=%(AppName)-0install-Setup-per-user
-SetupIconFile=..\%(AppName)\theme\icons\%(AppName).ico
+OutputBaseFilename=%(AppName)s-0install-Setup-per-user
+SetupIconFile=..\%(AppName)s\theme\icons\%(AppName)s.ico
 Compression=lzma/Max
 SolidCompression=true
 VersionInfoVersion=%(VersionInfoVersion)s
-VersionInfoDescription=%(AppName) Setup
+VersionInfoDescription=%(AppName)s Setup
 VersionInfoTextVersion=0install
 WizardImageFile=..\misc\media\install.bmp
 WizardSmallImageFile=..\misc\media\icon-install.bmp
 AppVersion=0install
-UninstallDisplayName={cm:UninstallProgram,%(AppName)}
-UninstallDisplayIcon={app}\%(AppName)-uninstall.ico
+UninstallDisplayName={cm:UninstallProgram,%(AppName)s}
+UninstallDisplayIcon={app}\%(AppName)s-uninstall.ico
 AlwaysShowComponentsList=false
 ShowLanguageDialog=auto
 MinVersion=0,5.1.2600
@@ -47,21 +47,21 @@ Name: italian; MessagesFile: ..\misc\InnoSetup\v5\Languages\Italian.isl;
 Name: spanish; MessagesFile: ..\misc\InnoSetup\v5\Languages\Spanish.isl;
 
 [Files]
-Source: ..\%(AppName)\theme\icons\%(AppName)-uninstall.ico; DestDir: {app};
+Source: ..\%(AppName)s\theme\icons\%(AppName)s-uninstall.ico; DestDir: {app};
 
 [Icons]
-Name: {group}\{cm:SelectVersion}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --refresh --customize --no-wait %(URL)s0install/%(AppName).xml";
-Name: {group}\{cm:ChangeIntegration}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate %(URL)s0install/%(AppName).xml";
-Name: {group}\{cm:UninstallProgram,%(AppName)}; Filename: {uninstallexe}; IconFilename: {app}\%(AppName)-uninstall.ico;
+Name: {group}\{cm:SelectVersion}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --refresh --customize --no-wait %(URL)s0install/%(AppName)s.xml";
+Name: {group}\{cm:ChangeIntegration}; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate %(URL)s0install/%(AppName)s.xml";
+Name: {group}\{cm:UninstallProgram,%(AppName)s}; Filename: {uninstallexe}; IconFilename: {app}\%(AppName)s-uninstall.ico;
 Name: {group}\LICENSE; Filename: %(URL)sLICENSE.txt;
 Name: {group}\README; Filename: %(URL)s;
-Name: {userstartup}\%(AppName) Profile Loader; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --offline --command=run-apply-profiles %(URL)s0install/%(AppName).xml";
+Name: {userstartup}\%(AppName)s Profile Loader; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run --batch --no-wait --offline --command=run-apply-profiles %(URL)s0install/%(AppName)s.xml";
 
 [Run]
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --refresh %(URL)s0install/%(AppName).xml"; Description: {cm:LaunchProgram,%(AppName)}; Flags: runasoriginaluser
+Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --refresh %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: runasoriginaluser
 Filename: %(URL)s; Description: {code:Get_RunEntryShellExec_Message|README}; Flags: nowait postinstall shellexec skipifsilent;
-Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run %(URL)s0install/%(AppName).xml"; Description: {cm:LaunchProgram,%(AppName)}; Flags: nowait postinstall skipifsilent
-; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --add=auto-start --batch %(URL)s0install/%(AppName).xml"; Description: {cm:LaunchProgram,%(AppName)}; Flags: runasoriginaluser
+Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "run %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: nowait postinstall skipifsilent
+; Filename: {reg:HKCU\Software\Zero Install,InstallLocation|{reg:HKLM\Software\Zero Install,InstallLocation}}\0install-win.exe; Parameters: "integrate --add=auto-start --batch %(URL)s0install/%(AppName)s.xml"; Description: {cm:LaunchProgram,%(AppName)s}; Flags: runasoriginaluser
 
 [Code]
 function Get_RunEntryShellExec_Message(Value: string): string;
@@ -132,7 +132,7 @@ begin
 	if CurUninstallStep=usUninstall then begin
 		if ZeroInstall_IsInstalled() then begin
 			ZeroInstall := Get_ZeroInstall_Exe();
-			if not Exec(ZeroInstall, 'remove --batch %(URL)s0install/%(AppName).xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
+			if not Exec(ZeroInstall, 'remove --batch %(URL)s0install/%(AppName)s.xml', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
 				SuppressibleMsgBox(SysErrorMessage(ErrorCode), mbError, MB_OK, MB_OK);
 		end;
 	end;
