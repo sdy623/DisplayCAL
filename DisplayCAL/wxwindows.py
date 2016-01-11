@@ -31,7 +31,7 @@ from options import debug
 from ordereddict import OrderedDict
 from network import ScriptingClientSocket
 from util_io import StringIOu as StringIO
-from util_os import get_program_file, waccess
+from util_os import get_program_file, launch_file, waccess
 from util_str import safe_str, safe_unicode, wrap
 from util_xml import dict2xml
 from wxaddons import (CustomEvent, FileDrop as _FileDrop,
@@ -59,6 +59,7 @@ except ImportError:
 import wx.lib.filebrowsebutton as filebrowse
 from wx.lib import fancytext
 from wx.lib.statbmp import GenStaticBitmap
+import wx.html
 
 
 numpad_keycodes = [wx.WXK_NUMPAD0,
@@ -1811,6 +1812,37 @@ class BaseInteractiveDialog(wx.Dialog):
 			self.Center(wx.HORIZONTAL)
 		elif self.pos[1] == -1:
 			self.Center(wx.VERTICAL)
+
+
+class HtmlInfoDialog(BaseInteractiveDialog):
+
+	def __init__(self, parent=None, id=-1, title=appname, msg="", html="",
+				 ok="OK", bitmap=None, pos=(-1, -1), size=(400, -1), 
+				 show=True, log=True, bitmap_margin=None):
+		BaseInteractiveDialog.__init__(self, parent, id, title, msg, ok, 
+									   bitmap, pos, size, False, log,
+									   bitmap_margin=bitmap_margin)
+
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale < 1:
+			scale = 1
+		htmlwnd = wx.html.HtmlWindow(self, -1, size=(332 * scale, 200 * scale),
+									 style=wx.BORDER_THEME)
+		if "gtk3" in wx.PlatformInfo:
+			size = int(round(self.message.Font.PointSize * scale))
+		else:
+			size = -1
+		htmlwnd.SetStandardFonts(size)
+		htmlwnd.SetPage(html)
+		htmlwnd.Bind(wx.html.EVT_HTML_LINK_CLICKED,
+					 lambda event: launch_file(event.GetLinkInfo().Href))
+		self.sizer3.Add(htmlwnd, 1, flag=wx.TOP | wx.ALIGN_LEFT | wx.EXPAND,
+						border=12)
+		self.sizer0.SetSizeHints(self)
+		self.sizer0.Layout()
+		if show:
+			self.ok.SetDefault()
+			self.ShowModalThenDestroy(parent)
 
 
 class BitmapBackgroundBitmapButton(wx.BitmapButton):

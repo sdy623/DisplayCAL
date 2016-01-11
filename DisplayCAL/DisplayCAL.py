@@ -139,8 +139,9 @@ from wxwindows import (AboutDialog, AuiBetterTabArt, BaseApp, BaseFrame,
 					   BetterStaticFancyText, BetterLinkCtrl, BorderGradientButton,
 					   BitmapBackgroundPanel, BitmapBackgroundPanelText,
 					   ConfirmDialog, CustomGrid, CustomCellBoolRenderer,
-					   FileDrop, HyperLinkCtrl, InfoDialog, LogWindow,
-					   ProgressDialog, TooltipWindow, get_gradient_panel)
+					   FileDrop, HtmlInfoDialog, HyperLinkCtrl, InfoDialog,
+					   LogWindow, ProgressDialog, TooltipWindow,
+					   get_gradient_panel)
 import floatspin
 import xh_fancytext
 import xh_filebrowsebutton
@@ -218,7 +219,7 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 	if newversion_tuple > curversion_tuple:
 		# Get changelog
 		resp = http_request(parent, domain, "GET", "/" + readme_file,
-							silent=silent)
+							silent=True)
 		chglog = None
 		if resp:
 			readme = resp.read()
@@ -853,15 +854,20 @@ def http_request(parent=None, domain=None, request_type="GET", path="",
 						 bitmap=geticon(32, "dialog-error"), log=False)
 		return False
 	if resp.status >= 400:
+		uri = "http://" + domain + path
 		msg = " ".join([failure_msg,
 						lang.getstr("connection.fail.http", 
 									" ".join([str(resp.status),
-											  resp.reason,
-											  resp.read()]))]).strip()
+											  resp.reason]))]).strip() + "\n" + uri
 		safe_print(msg)
+		html = universal_newlines(resp.read().strip())
+		html = re.sub(r"<script.*?</script>", "<!-- SCRIPT removed -->",
+					  html, re.I | re.S)
+		html = re.sub(r"<style.*?</style>", "<!-- STYLE removed -->",
+					  html, re.I | re.S)
+		safe_print(html)
 		if not silent:
-			wx.CallAfter(InfoDialog, parent, 
-						 msg=msg,
+			wx.CallAfter(HtmlInfoDialog, parent, msg=msg, html=html,
 						 ok=lang.getstr("ok"), 
 						 bitmap=geticon(32, "dialog-error"), log=False)
 		return False
