@@ -992,7 +992,7 @@ def setup():
 							icon.setAttribute("href",
 											  "http://%s/theme/icons/%s%s.%s" %
 											  (domain.lower(), subdir,
-											   script, ext))
+											   script.lower(), ext))
 							icon.setAttribute("type", mime_type)
 							entry_point.appendChild(icon)
 						interface.appendChild(entry_point)

@@ -6,7 +6,7 @@
 	<description xml:lang="en">
 ${DESC}</description>
 	<homepage>${URL}</homepage>
-	<icon href="${URL}theme/icons/256x256/${APPNAME}.png" type="image/png" />
+	<icon href="${URL}theme/icons/256x256/${APPNAME_LOWER}.png" type="image/png" />
 	<category>.</category>
 	<feed-for interface="${URL}0install/${APPNAME}.xml" />
 	<group arch="Windows-*" license="GPL v3 (GNU General Public License)" main="${APPNAME}.pyw">
