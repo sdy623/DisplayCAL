@@ -2344,6 +2344,7 @@ class MainFrame(ReportFrame, BaseFrame):
 														   and edid["green_y"]
 														   and edid["blue_x"]
 														   and edid["blue_y"]))
+		self.menuitem_profile_hires_b2a.Enable(self.worker.argyll_version > [0, 0, 0])
 		self.menuitem_install_display_profile.Enable(bool(self.worker.displays) and
 			not config.is_virtual_display())
 		calibration_loading_supported = self.worker.calibration_loading_supported
