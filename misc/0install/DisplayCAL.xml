@@ -6,7 +6,7 @@
 	<description xml:lang="en">
 ${DESC}</description>
 	<homepage>${URL}</homepage>
-	<icon href="${URL}theme/icons/256x256/${APPNAME}.png" type="image/png" />
+	<icon href="${URL}theme/icons/256x256/${APPNAME_LOWER}.png" type="image/png" />
 	<category>.</category>
 	<feed arch="Linux-*" src="${URL}0install/${APPNAME}-linux.xml" />
 	<feed arch="MacOSX-*" src="${URL}0install/${APPNAME}-mac.xml" />

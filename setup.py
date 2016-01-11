@@ -987,12 +987,14 @@ def setup():
 							icon = domtree.createElement("icon")
 							if ext == "ico":
 								subdir = ""
+								filename = script
 							else:
 								subdir = "256x256/"
+								filename = script.lower()
 							icon.setAttribute("href",
 											  "http://%s/theme/icons/%s%s.%s" %
 											  (domain.lower(), subdir,
-											   script.lower(), ext))
+											   filename, ext))
 							icon.setAttribute("type", mime_type)
 							entry_point.appendChild(icon)
 						interface.appendChild(entry_point)
