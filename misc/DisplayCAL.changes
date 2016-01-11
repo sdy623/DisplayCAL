@@ -4,6 +4,11 @@ ${DATETIME} - ${MAINTAINER_EMAIL}
 - update to ${VERSION}: see README.html#changelog-${VERSION_SHORT}
 
 -------------------------------------------------------------------
+Mon Jan 11 10:34:55 UTC 2016 - dispcalGUI@hoech.net
+
+- update to 3.0.6.3: see README.html#changelog-3.0.6.3
+
+-------------------------------------------------------------------
 Mon Dec 21 20:22:55 UTC 2015 - dispcalGUI@hoech.net
 
 - update to 3.0.6.0: see README.html#changelog-3.0.6
