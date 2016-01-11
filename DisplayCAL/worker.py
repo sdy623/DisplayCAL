@@ -2498,8 +2498,8 @@ class Worker(object):
 					# device linking instead
 					applycal = get_argyll_util("applycal")
 					if not applycal:
-						raise NotImplementedError(lang.getstr("argyll.util.not_found",
-															  "applycal"))
+						raise Error(lang.getstr("argyll.util.not_found",
+												"applycal"))
 					safe_print(lang.getstr("apply_cal"))
 					result = self.exec_cmd(applycal, ["-v",
 													  profile_out_cal_path,
@@ -2546,8 +2546,7 @@ class Worker(object):
 			# Now build the device link
 			collink = get_argyll_util("collink")
 			if not collink:
-				raise NotImplementedError(lang.getstr("argyll.util.not_found",
-													  "collink"))
+				raise Error(lang.getstr("argyll.util.not_found", "collink"))
 			is_argyll_lut_format = (self.argyll_version >= [1, 6] and
 									(((format == "eeColor" or
 									   (format == "cube" and
@@ -10358,8 +10357,7 @@ class Xicclu(Worker):
 		utilname = "icclu" if use_icclu else "xicclu"
 		xicclu = get_argyll_util(utilname)
 		if not xicclu:
-			raise NotImplementedError(lang.getstr("argyll.util.not_found",
-												  utilname))
+			raise Error(lang.getstr("argyll.util.not_found", utilname))
 		if not isinstance(profile, (CGATS.CGATS, ICCP.ICCProfile)):
 			if profile.lower().endswith(".cal"):
 				profile = CGATS.CGATS(profile)
