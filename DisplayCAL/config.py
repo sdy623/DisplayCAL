@@ -597,13 +597,6 @@ def runtimeconfig(pyfile):
 	if debug:
 		safe_print("[D] Data files search paths:\n[D]", "\n[D] ".join(data_dirs))
 	defaults["calibration.file"] = get_data_path("presets/default.icc") or ""
-	defaultmmode = defaults["measurement_mode"]
-	defaultptype = defaults["profile.type"]
-	defaultchart = testchart_defaults.get(defaultptype, 
-										  testchart_defaults["l"])[None]
-	defaults["testchart.file"] = get_data_path(os.path.join("ti1", 
-															defaultchart)) or ""
-	defaults["testchart.file.backup"] = defaults["testchart.file"]
 	defaults["measurement_report.chart"] = get_data_path(os.path.join("ref", 
 															"verify_extended.ti1")) or ""
 	return runtype
@@ -980,6 +973,8 @@ defaults = {
 	"tc.show": 0,
 	"testchart.auto_optimize": 5,
 	"testchart.auto_optimize.fix_zero_blackpoint": 0,
+	"testchart.file": "auto",
+	"testchart.file.backup": "auto",
 	"testchart.reference": "",
 	"ti3.check_sanity.auto": 0,
 	"trc": 2.2,
