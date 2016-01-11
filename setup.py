@@ -400,6 +400,10 @@ def setup():
 								 lastmod_time,
 								 {"STABILITY": "Beta" if stability != "stable"
 											   else ""})
+			replace_placeholders(os.path.join(pydir, "misc", 
+											  "history.template.html"),
+								 os.path.join(pydir, "history.html"),
+								 lastmod_time)
 		sys.argv.remove("readme")
 		if len(sys.argv) == 1 or (len(sys.argv) == 2 and dry_run):
 			return
