@@ -1464,6 +1464,8 @@ def initcfg(module=None):
 			for name, val in cfg.items(section):
 				if isinstance(val, list):
 					cfg.set(section, name, "\n".join(val))
+	if not getcfg("calibration.file", False):
+		setcfg("calibration.file", defaults["calibration.file"])
 
 
 dpiset = False
