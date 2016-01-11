@@ -2386,7 +2386,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.menuitem_enable_spyder2.Enable(bool(spyd2en))
 		self.menuitem_enable_spyder2.Check(bool(spyd2en) and  
 										   spyder2_firmware_exists)
-		self.menuitem_show_lut.Enable(bool(LUTFrame))
+		self.menuitem_show_lut.Enable(bool(LUTFrame) and
+									  self.worker.argyll_version > [0, 0, 0])
 		self.menuitem_show_lut.Check(bool(getcfg("lut_viewer.show")))
 		if hasattr(self, "lut_viewer"):
 			self.lut_viewer.update_controls()
@@ -13618,13 +13619,16 @@ class MainFrame(ReportFrame, BaseFrame):
 				self.tcframe.Show(getcfg("tc.show"))
 			if getcfg("log.show"):
 				wx.CallAfter(self.infoframe_toggle_handler, show=True)
-			if LUTFrame and getcfg("lut_viewer.show"):
+			if (LUTFrame and getcfg("lut_viewer.show") and
+				self.worker.argyll_version > [0, 0, 0]):
 				if getattr(self, "lut_viewer", None):
 					self.init_lut_viewer(show=True)
 				else:
 					# Using wx.CallAfter fixes wrong positioning under wxGTK
 					# with wxPython 3 on first initialization
 					wx.CallAfter(self.init_lut_viewer, show=True)
+			else:
+				setcfg("lut_viewer.show", 0)
 			for profile_info in reversed(self.profile_info.values()):
 				profile_info.Show()
 		if start_timers:
