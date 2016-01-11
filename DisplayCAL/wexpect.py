@@ -2800,15 +2800,18 @@ def log(e, suffix='', logdir=None):
                 logdir.pop()
             logdir = logdir[-1]
     if sys.platform == "win32":
-        logdir = os.path.join(SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1), 
-                              logdir, "logs")
+        parent = SHGetSpecialFolderPath(0, CSIDL_APPDATA, 1)
     elif sys.platform == "darwin":
-        logdir = os.path.join(os.path.expanduser("~"), "Library", "Logs", 
-                              logdir)
+        parent = os.path.join(os.path.expanduser("~"), "Library", "Logs")
     else:
-        logdir = os.path.join(os.getenv("XDG_DATA_HOME", 
-                                        os.path.expandvars("$HOME/.local/share")), 
-                                        logdir, "logs")
+        parent = os.getenv("XDG_DATA_HOME", 
+                           os.path.expandvars("$HOME/.local/share"))
+    # If old user data directory exists, use its basename
+    if logdir == appname and os.path.isdir(os.path.join(parent, "dispcalGUI")):
+        logdir = "dispcalGUI"
+    logdir = os.path.join(parent, logdir)
+    if sys.platform != "darwin":
+        logdir = os.path.join(logdir, "logs")
     if not os.path.exists(logdir):
         try:
             os.makedirs(logdir)
