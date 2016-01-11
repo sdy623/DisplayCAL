@@ -12404,15 +12404,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if ((event and set_argyll_bin(self, silent, callafter, callafter_args)) or
 			(not event and check_argyll_bin())):
 			self.check_update_controls(True, callafter=callafter,
-									   callafter_args=callafter_args) or self.update_menus()
-			if len(self.worker.displays):
-				if getcfg("calibration.file", False):
-					# Load LUT curves from last used .cal file
-					self.load_cal(silent=True)
-				else:
-					# Load LUT curves from current display profile (if any, 
-					# and if it contains curves)
-					self.load_display_profile_cal(None)
+									   callafter_args=callafter_args)
 
 	def check_update_controls(self, event=None, silent=False, callafter=None,
 							  callafter_args=()):
@@ -12562,6 +12554,14 @@ class MainFrame(ReportFrame, BaseFrame):
 			returnvalue = True
 		else:
 			returnvalue = False
+		if len(self.worker.displays):
+			if getcfg("calibration.file", False):
+				# Load LUT curves from last used .cal file
+				self.load_cal(silent=True)
+			else:
+				# Load LUT curves from current display profile (if any, 
+				# and if it contains curves)
+				self.load_display_profile_cal(None)
 		if callafter:
 			callafter(*callafter_args)
 		return returnvalue
