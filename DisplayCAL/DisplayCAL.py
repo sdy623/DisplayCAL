@@ -7986,7 +7986,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				# Get 3D LUT options
 				self.lut3d_set_path()
 				# Check if we want to automatically create 3D LUT
-				if (getcfg("3dlut.create") and
+				if (install_3dlut and getcfg("3dlut.create") and
 					not os.path.isfile(self.lut3d_path)):
 					# Update curve viewer if shown
 					self.lut_viewer_load_lut(profile=profile)
