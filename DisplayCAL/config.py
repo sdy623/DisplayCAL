@@ -267,8 +267,10 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 		else:
 			if parts[-1].startswith(appname):
 				parts[-1] = parts[-1].lower()
+			oname = parts[-1]
+			name2x = oname + "@2x"
 			path = None
-			for i in xrange(3):
+			for i in xrange(4):
 				if scale > 1:
 					if len(size) == 2:
 						# Icon
@@ -276,21 +278,26 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 							# HighDPI support. Try scaled size
 							parts[-2] = "%ix%i" % (w, h)
 						elif i == 1:
+							# HighDPI support. Try @2x version
+							parts[-2] = "%ix%i" % (ow, oh)
+							parts[-1] = name2x
+						elif i == 2:
 							# HighDPI support. Try original size times two
 							parts[-2] = "%ix%i" % (ow * 2, oh * 2)
+							parts[-1] = oname
 						else:
 							# Try original size
 							parts[-2] = "%ix%i" % (ow, oh)
 					else:
 						# Theme graphic
-						if i == 0:
+						if i in (0, 2):
 							continue
 						elif i == 1:
-							# HighDPI support. Try 2x version
-							parts.insert(-1, "2x")
+							# HighDPI support. Try @2x version
+							parts[-1] = name2x
 						else:
 							# Try original size
-							parts.pop(-2)
+							parts[-1] = oname
 				if (sys.platform not in ("darwin", "win32") and
 					parts[-1].startswith(appname)):
 					# Search /usr/share/icons on Linux first
