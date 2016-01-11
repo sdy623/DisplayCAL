@@ -2888,6 +2888,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			"x3dom.embed"
 		]
 		override_default = {
+			"app.dpi": None,
 			"calibration.black_luminance": None,
 			"calibration.luminance": None,
 			"gamap_src_viewcond": "mt",
