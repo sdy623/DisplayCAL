@@ -18,6 +18,7 @@ class ProfileLoader(object):
 
 	def __init__(self):
 		import config
+		from config import appbasename
 		from worker import Worker
 		from wxwindows import wx
 		if not wx.GetApp():
@@ -36,14 +37,15 @@ class ProfileLoader(object):
 				# Incase calibration loading is handled by Windows 7 and
 				# isn't forced
 				apply_profiles = False
-		if apply_profiles and not "--skip" in sys.argv[1:]:
+		if (apply_profiles and not "--skip" in sys.argv[1:] and
+			not os.path.isfile(os.path.join(config.confighome,
+											appbasename + ".lock"))):
 			self.apply_profiles_and_warn_on_error()
 		if sys.platform == "win32":
 			# We create a TSR tray program only under Windows.
 			# Linux has colord/Oyranos and respective session daemons should
 			# take care of calibration loading
 			import localization as lang
-			from config import appbasename
 			from util_win import calibration_management_isenabled
 			from wxwindows import BaseFrame
 
