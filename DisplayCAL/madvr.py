@@ -30,6 +30,11 @@ from ordereddict import OrderedDict
 from util_str import safe_str, safe_unicode
 
 
+CALLBACK = ctypes.CFUNCTYPE(None, ctypes.c_void_p, ctypes.POINTER(None),
+							ctypes.c_char_p, ctypes.c_ulong, ctypes.c_ulonglong,
+							ctypes.c_char_p, ctypes.c_ulonglong, ctypes.c_bool)
+
+
 min_version = (0, 87, 14, 0)
 
 
@@ -61,6 +66,8 @@ _methodnames = ("ConnectEx", "Disable3dlut", "Enable3dlut",
 				"SetUseFullscreenButton", "ShowRGB",
 				"ShowRGBEx", "Load3dlutFile", "Disconnect",
 				"Quit", "Load3dlutFromArray256")
+
+_autonet_methodnames = ("AddConnectionCallback", "Listen", "Announce")
 
 
 _lock = threading.RLock()
@@ -144,6 +151,8 @@ class MadTPG(object):
 	""" Minimal madTPG controller class """
 
 	def __init__(self):
+		self._connection_callbacks = []
+
 		# We only expose stuff we might actually use.
 
 		# Find madHcNet32.dll
@@ -162,8 +171,14 @@ class MadTPG(object):
 
 		try:
 			# Set expected return value types
-			for methodname in _methodnames:
-				getattr(self.mad, "madVR_%s" % methodname).restype = ctypes.c_bool
+			for methodname in _methodnames + _autonet_methodnames:
+				if methodname == "AddConnectionCallback":
+					continue
+				if methodname in _autonet_methodnames:
+					prefix = "AutoNet"
+				else:
+					prefix = "madVR"
+				getattr(self.mad, prefix + "_" + methodname).restype = ctypes.c_bool
 
 			# Set expected argument types
 			self.mad.madVR_ShowRGB.argtypes = [ctypes.c_double] * 3
@@ -186,12 +201,30 @@ class MadTPG(object):
 		methodname = "".join(part.capitalize() for part in name.split("_"))
 
 		# Check if this is a madVR method we support
-		if methodname not in _methodnames:
+		if methodname not in _methodnames + _autonet_methodnames:
 			raise AttributeError("%r object has no attribute %r" %
 								 (self.__class__.__name__, name))
 
-		# Call the method and return the result
-		return getattr(self.mad, "madVR_%s" % methodname)
+		# Return the method
+		if methodname in _autonet_methodnames:
+			prefix = "AutoNet"
+		else:
+			prefix = "madVR"
+		return getattr(self.mad, prefix + "_" + methodname)
+
+	def add_connection_callback(self, callback, param, component):
+		"""
+		Handles callbacks for added/closed connections to playback components
+		
+		Leave "component" empty to get notification about all components.
+		
+		The callback function has to take eight arguments:
+		param, connection, ip, pid, module, component, instance, is_new_instance
+		
+		"""
+		callback = CALLBACK(callback)
+		self.mad.AutoNet_AddConnectionCallback(callback, param, component)
+		self._connection_callbacks.append(callback)
 
 	def connect(self, method1=CM_ConnectToLocalInstance, timeout1=1000,
 				method2=CM_ConnectToLanInstance, timeout2=3000,
