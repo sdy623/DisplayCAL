@@ -28,6 +28,7 @@ class ProfileLoader(object):
 		self.worker = Worker()
 		self.reload_count = 0
 		self.lock = threading.Lock()
+		self._madvr_instances = []
 		apply_profiles = ("--force" in sys.argv[1:] or
 						  config.getcfg("profile.load_on_login"))
 		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
@@ -39,13 +40,16 @@ class ProfileLoader(object):
 				apply_profiles = False
 		if (apply_profiles and not "--skip" in sys.argv[1:] and
 			not os.path.isfile(os.path.join(config.confighome,
-											appbasename + ".lock"))):
+											appbasename + ".lock")) and
+			not self._is_madvr_running(True)):
 			self.apply_profiles_and_warn_on_error()
 		if sys.platform == "win32":
 			# We create a TSR tray program only under Windows.
 			# Linux has colord/Oyranos and respective session daemons should
 			# take care of calibration loading
 			import localization as lang
+			import madvr
+			from util_str import safe_unicode
 			from util_win import calibration_management_isenabled
 			from wxwindows import BaseFrame
 
@@ -64,8 +68,9 @@ class ProfileLoader(object):
 						if (not "--force" in sys.argv[1:] and
 							calibration_management_isenabled()):
 							return lang.getstr("calibration.load.handled_by_os")
-						if os.path.isfile(os.path.join(config.confighome,
-													   appbasename + ".lock")):
+						if (os.path.isfile(os.path.join(config.confighome,
+													    appbasename + ".lock")) or
+							self.pl._is_madvr_running()):
 							return "forbidden"
 						else:
 							self.pl.apply_profiles(True)
@@ -88,8 +93,9 @@ class ProfileLoader(object):
 					# Popup menu appears on right-click
 					menu = wx.Menu()
 					
-					if os.path.isfile(os.path.join(config.confighome,
-												   appbasename + ".lock")):
+					if (os.path.isfile(os.path.join(config.confighome,
+												   appbasename + ".lock")) or
+						self.pl._is_madvr_running()):
 						method = None
 					else:
 						method = self.pl.apply_profiles_and_warn_on_error
@@ -126,6 +132,19 @@ class ProfileLoader(object):
 					self.ShowBalloon(self.pl.get_title(), text, 100)
 
 			self.taskbar_icon = TaskBarIcon(self)
+
+			try:
+				self.madvr = madvr.MadTPG()
+			except Exception, exception:
+				safe_print(exception)
+				self.taskbar_icon.show_balloon(safe_unicode(exception))
+			else:
+				self.madvr.add_connection_callback(self._madvr_connection_callback,
+												   None, "madVR")
+				self.madvr.add_connection_callback(self._madvr_connection_callback,
+												   None, "madTPG")
+				self.madvr.listen()
+				self.madvr.announce()
 
 			self.frame.listen()
 
@@ -347,7 +366,8 @@ class ProfileLoader(object):
 		while wx.GetApp():
 			apply_profiles = ("--force" in sys.argv[1:] or
 							  (config.getcfg("profile.load_on_login") and
-							   not calibration_management_isenabled()))
+							   not calibration_management_isenabled()) and
+							  not self._is_madvr_running())
 			if not apply_profiles:
 				self.profile_associations = {}
 			# Check if display configuration changed
@@ -377,22 +397,24 @@ class ProfileLoader(object):
 				_winreg.CloseKey(subkey)
 			_winreg.CloseKey(key)
 			# Check profile associations
-			self.lock.acquire()
-			for i, display in enumerate(self.worker.displays):
-				if config.is_virtual_display(i):
-					continue
-				try:
-					profile = ICCP.get_display_profile(i, path_only=True)
-				except IndexError:
-					break
-				if self.profile_associations.get(i) != profile and apply_profiles:
-					if not first_run:
-						safe_print(lang.getstr("display_detected"))
-						self.lock.release()
-						self.apply_profiles(True, index=i)
-						self.lock.acquire()
-					self.profile_associations[i] = profile
-			self.lock.release()
+			if apply_profiles:
+				self.lock.acquire()
+				for i, display in enumerate(self.worker.displays):
+					if config.is_virtual_display(i):
+						continue
+					try:
+						profile = ICCP.get_display_profile(i, path_only=True)
+					except IndexError:
+						break
+					if self.profile_associations.get(i) != profile:
+						if not first_run:
+							safe_print(lang.getstr("display_detected"))
+							self.lock.release()
+							self.apply_profiles(True, index=i)
+							self.lock.acquire()
+							apply_profiles = False
+						self.profile_associations[i] = profile
+				self.lock.release()
 			first_run = False
 			# Wait three seconds
 			timeout = 0
@@ -401,6 +423,50 @@ class ProfileLoader(object):
 				timeout += .1
 				if timeout > 2.9:
 					break
+
+	def _enumerate_windows_callback(self, hwnd, extra):
+		import win32gui
+		cls = win32gui.GetClassName(hwnd)
+		if cls == "madHcNetQueueWindow":
+			import pywintypes
+			import win32api
+			import win32con
+			import win32process
+			try:
+				thread_id, pid = win32process.GetWindowThreadProcessId(hwnd)
+				handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION |
+											  win32con.PROCESS_VM_READ, False,
+											  pid)
+				name = win32process.GetModuleFileNameEx(handle, 0)
+				win32api.CloseHandle(handle)
+			except pywintypes.error:
+				return False
+			if os.path.basename(name).lower() not in ("madhcctrl.exe",
+													  "python.exe"):
+				self.__madvr_isrunning = True
+
+	def _is_madvr_running(self, fallback=False):
+		""" Determine id madVR is in use (e.g. video playback, madTPG) """
+		if sys.platform != "win32":
+			return
+		if len(self._madvr_instances):
+			return True
+		if fallback:
+			# At launch, we won't be able to determine if madVR is running via
+			# the callback API.
+			import win32gui
+			self.__madvr_isrunning = False
+			win32gui.EnumWindows(self._enumerate_windows_callback, None)
+			return self.__madvr_isrunning
+
+	def _madvr_connection_callback(self, param, connection, ip, pid, module,
+								   component, instance, is_new_instance):
+		if ip in ("127.0.0.1", "localhost", "::1", "0:0:0:0:0:0:0:1"):
+			args = (param, connection, ip, pid, module, component, instance)
+			if is_new_instance:
+				self._madvr_instances.append(args)
+			elif args in self._madvr_instances:
+				self._madvr_instances.remove(args)
 
 
 def main():
