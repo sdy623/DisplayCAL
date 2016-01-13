@@ -479,7 +479,7 @@ class ProfileLoader(object):
 					if len(vcgt_values[0]) != 256:
 						# Hmm. Do we need to deal with this?
 						# I've never seen table-based vcgt with != 256 entries
-						if self._force_reload:
+						if self._force_reload and profile.tags.get("vcgt"):
 							safe_print(lang.getstr("calibration.loading_from_display_profile"))
 							safe_print(display)
 							safe_print(lang.getstr("vcgt.unknown_format",
@@ -488,7 +488,16 @@ class ProfileLoader(object):
 							results.append(display)
 							errors.append(lang.getstr("vcgt.unknown_format",
 													  os.path.basename(profile.fileName)))
-						continue
+						# Fall back to linear calibration
+						tagData = "vcgt"
+						tagData += "\0" * 4  # Reserved
+						tagData += "\0\0\0\x01"  # Formula type
+						for channel in xrange(3):
+							tagData += "\0\x01\0\0"  # Gamma 1.0
+							tagData += "\0" * 4  # Min 0.0
+							tagData += "\0\x01\0\0"  # Max 1.0
+						vcgt = ICCP.VideoCardGammaFormulaType(tagData, "vcgt")
+						vcgt_values = vcgt.get_values()[:3]
 					values = ([], [], [])
 					if not self._force_reload:
 						# Get video card gamma ramp
@@ -513,7 +522,7 @@ class ProfileLoader(object):
 					# Convert vcgt to ushort_Array_256_Array_3
 					vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
 					for j in xrange(len(vcgt_values[0])):
-						for k, channel in enumerate("RGB"):
+						for k in xrange(3):
 							vcgt_ramp[k][j] = vcgt_values[k][j][1]
 					if not self._force_reload:
 						safe_print(lang.getstr("vcgt.mismatch", display))
