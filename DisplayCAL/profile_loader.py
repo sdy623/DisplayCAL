@@ -458,6 +458,7 @@ class ProfileLoader(object):
 							##self.lock.acquire()
 							##apply_profiles = False
 						self.profile_associations[i] = (profile, mtime)
+						self.profiles[profile] = None
 					# Check video card gamma table and (re)load calibration if
 					# necessary
 					if not apply_profiles or not self.gdi32:
