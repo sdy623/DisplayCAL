@@ -28,17 +28,20 @@ class ProfileLoader(object):
 		self.worker = Worker()
 		self.reload_count = 0
 		self.lock = threading.Lock()
+		self.monitors = []
+		self._force_reload = False
 		self._madvr_instances = []
 		apply_profiles = ("--force" in sys.argv[1:] or
 						  config.getcfg("profile.load_on_login"))
-		if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
-			sys.getwindowsversion() >= (6, 1)):
-			from util_win import calibration_management_isenabled
-			if calibration_management_isenabled():
-				# Incase calibration loading is handled by Windows 7 and
-				# isn't forced
-				apply_profiles = False
-		if (apply_profiles and not "--skip" in sys.argv[1:] and
+		##if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
+			##sys.getwindowsversion() >= (6, 1)):
+			##from util_win import calibration_management_isenabled
+			##if calibration_management_isenabled():
+				### Incase calibration loading is handled by Windows 7 and
+				### isn't forced
+				##apply_profiles = False
+		if (sys.platform != "win32" and
+			apply_profiles and not "--skip" in sys.argv[1:] and
 			not os.path.isfile(os.path.join(config.confighome,
 											appbasename + ".lock")) and
 			not self._is_madvr_running(True)):
@@ -47,8 +50,10 @@ class ProfileLoader(object):
 			# We create a TSR tray program only under Windows.
 			# Linux has colord/Oyranos and respective session daemons should
 			# take care of calibration loading
+			import ctypes
 			import localization as lang
 			import madvr
+			from log import safe_print
 			from util_str import safe_unicode
 			from util_win import calibration_management_isenabled
 			from wxwindows import BaseFrame
@@ -72,6 +77,8 @@ class ProfileLoader(object):
 													    appbasename + ".lock")) or
 							self.pl._is_madvr_running()):
 							return "forbidden"
+						elif sys.platform == "win32":
+							self.pl._set_force_reload()
 						else:
 							self.pl.apply_profiles(True)
 						return self.pl.errors or "ok"
@@ -84,6 +91,7 @@ class ProfileLoader(object):
 				def __init__(self, pl):
 					super(TaskBarIcon, self).__init__()
 					self.pl = pl
+					self.balloon_text = None
 					self.SetIcon(config.get_bitmap_as_icon(16, appname +
 															   "-apply-profiles"),
 								 self.pl.get_title())
@@ -98,7 +106,8 @@ class ProfileLoader(object):
 						self.pl._is_madvr_running()):
 						method = None
 					else:
-						method = self.pl.apply_profiles_and_warn_on_error
+						##method = self.pl.apply_profiles_and_warn_on_error
+						method = self.pl._set_force_reload
 					for label, method in (("calibration.reload_from_display_profiles",
 										   method),
 										  ("-", None),
@@ -118,9 +127,15 @@ class ProfileLoader(object):
 				def on_left_down(self, event):
 					self.show_balloon()
 
-				def show_balloon(self, text=None):
+				def show_balloon(self, text=None, sticky=False):
 					if wx.VERSION < (3, ):
 						return
+					if sticky:
+						self.balloon_text = text
+					elif text:
+						self.balloon_text = None
+					else:
+						text = self.balloon_text
 					if not text:
 						if (not "--force" in sys.argv[1:] and
 							calibration_management_isenabled()):
@@ -132,6 +147,15 @@ class ProfileLoader(object):
 					self.ShowBalloon(self.pl.get_title(), text, 100)
 
 			self.taskbar_icon = TaskBarIcon(self)
+
+			try:
+				self.gdi32 = ctypes.windll.gdi32
+				self.gdi32.GetDeviceGammaRamp.restype = ctypes.c_bool
+				self.gdi32.SetDeviceGammaRamp.restype = ctypes.c_bool
+			except Exception, exception:
+				self.gdi32 = None
+				safe_print(exception)
+				self.taskbar_icon.show_balloon(safe_unicode(exception))
 
 			try:
 				self.madvr = madvr.MadTPG()
@@ -160,7 +184,6 @@ class ProfileLoader(object):
 		from log import safe_print
 		from util_os import which
 		from worker import Worker, get_argyll_util
-		from wxwindows import wx
 
 		if sys.platform == "win32":
 			self.lock.acquire()
@@ -192,6 +215,9 @@ class ProfileLoader(object):
 				worker.enumerate_displays_and_ports(silent=True, check_lut_access=False,
 													enumerate_ports=False,
 													include_network_devices=False)
+				self.monitors = []
+				if sys.platform == "win32" and worker.displays:
+					self._enumerate_monitors()
 			else:
 				errors.append(lang.getstr("argyll.util.not_found", "dispwin"))
 
@@ -231,7 +257,12 @@ class ProfileLoader(object):
 									silent=False)
 			if dispwin:
 				profile_arg = worker.get_dispwin_display_profile_argument(i)
-				self.profile_associations[i] = os.path.basename(profile_arg)
+				if os.path.isabs(profile_arg) and os.path.isfile(profile_arg):
+					mtime = os.stat(profile_arg).st_mtime
+				else:
+					mtime = 0
+				self.profile_associations[i] = (os.path.basename(profile_arg),
+												mtime)
 				if (sys.platform == "win32" or not oyranos_monitor or
 					not display_conf_oy_compat or not xcalib or profile_arg == "-L"):
 					# Only need to run dispwin if under Windows, or if nothing else
@@ -278,15 +309,21 @@ class ProfileLoader(object):
 		if sys.platform == "win32":
 			self.lock.release()
 			if event:
-				if results:
-					self.reload_count += 1
-					results.insert(0, lang.getstr("calibration.load_success"))
-				results.extend(errors)
-				wx.CallAfter(lambda text: self and
-										  self.taskbar_icon.show_balloon(text),
-							 "\n".join(results))
+				self.notify(results, errors)
 
 		return errors
+
+	def notify(self, results, errors, sticky=False):
+		from wxwindows import wx
+		if results:
+			import localization as lang
+			self.reload_count += 1
+			results.insert(0, lang.getstr("calibration.load_success"))
+		results.extend(errors)
+		wx.CallAfter(lambda text, sticky: self and
+										  self.taskbar_icon.show_balloon(text,
+																		 sticky),
+					 "\n".join(results), sticky)
 
 	def apply_profiles_and_warn_on_error(self, event=None, index=None):
 		errors = self.apply_profiles(event, index)
@@ -347,29 +384,30 @@ class ProfileLoader(object):
 		return title
 
 	def _check_display_conf(self):
+		import ctypes
 		import struct
 		import _winreg
 
-		import config
+		import win32gui
+
+		from defaultpaths import iccprofiles
 		import ICCProfile as ICCP
 		from wxwindows import wx
 		import localization as lang
 		from log import safe_print
-		from util_win import calibration_management_isenabled
 
 		display = None
 		current_display = None
 		current_timestamp = 0
-		displays_enumerated = self.worker.displays
 		first_run = True
 		self.profile_associations = {}
+		self.profiles = {}
 		while wx.GetApp():
-			apply_profiles = ("--force" in sys.argv[1:] or
-							  (config.getcfg("profile.load_on_login") and
-							   not calibration_management_isenabled()) and
-							  not self._is_madvr_running())
-			if not apply_profiles:
-				self.profile_associations = {}
+			results = []
+			errors = []
+			apply_profiles = self._should_apply_profiles(first_run)
+			##if not apply_profiles:
+				##self.profile_associations = {}
 			# Check if display configuration changed
 			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
 								  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
@@ -385,44 +423,159 @@ class ProfileLoader(object):
 							# One second delay to allow display configuration
 							# to settle
 							time.sleep(1)
-							self.apply_profiles(True)
-							apply_profiles = False
-						if not first_run or not displays_enumerated:
-							self.worker.enumerate_displays_and_ports(silent=True, check_lut_access=False,
-																	 enumerate_ports=False,
-																	 include_network_devices=False)
-							displays_enumerated = True
+							##self.apply_profiles(True)
+							##apply_profiles = False
+						if not first_run or not self.monitors:
+							##self.worker.enumerate_displays_and_ports(silent=True, check_lut_access=False,
+																	 ##enumerate_ports=False,
+																	 ##include_network_devices=False)
+							self._enumerate_monitors()
 					current_display = display
 					current_timestamp = timestamp
 				_winreg.CloseKey(subkey)
 			_winreg.CloseKey(key)
 			# Check profile associations
-			if apply_profiles:
-				self.lock.acquire()
-				for i, display in enumerate(self.worker.displays):
-					if config.is_virtual_display(i):
-						continue
+			if apply_profiles or first_run:
+				##self.lock.acquire()
+				for i, (display, moninfo) in enumerate(self.monitors):
 					try:
 						profile = ICCP.get_display_profile(i, path_only=True)
 					except IndexError:
 						break
-					if self.profile_associations.get(i) != profile:
+					except:
+						continue
+					profile_path = os.path.join(iccprofiles[0], profile)
+					if os.path.isfile(profile_path):
+						mtime = os.stat(profile_path).st_mtime
+					else:
+						mtime = 0
+					if self.profile_associations.get(i) != (profile, mtime):
 						if not first_run:
 							safe_print(lang.getstr("display_detected"))
-							self.lock.release()
-							self.apply_profiles(True, index=i)
-							self.lock.acquire()
-							apply_profiles = False
-						self.profile_associations[i] = profile
-				self.lock.release()
+							safe_print(display, "->", profile)
+							##self.lock.release()
+							##self.apply_profiles(True, index=i)
+							##self.lock.acquire()
+							##apply_profiles = False
+						self.profile_associations[i] = (profile, mtime)
+					# Check video card gamma table and (re)load calibration if
+					# necessary
+					if not apply_profiles or not self.gdi32:
+						continue
+					# Get display profile
+					if not self.profiles.get(profile):
+						try:
+							self.profiles[profile] = ICCP.ICCProfile(profile)
+							self.profiles[profile].tags.get("vcgt")
+						except Exception, exception:
+							continue
+					profile = self.profiles[profile]
+					vcgt_values = ([], [], [])
+					if isinstance(profile.tags.get("vcgt"),
+								  ICCP.VideoCardGammaType):
+						# Get display profile vcgt
+						vcgt_values = profile.tags.vcgt.get_values()[:3]
+					if len(vcgt_values[0]) != 256:
+						# Hmm. Do we need to deal with this?
+						# I've never seen table-based vcgt with != 256 entries
+						if self._force_reload:
+							safe_print(lang.getstr("calibration.loading_from_display_profile"))
+							safe_print(display)
+							safe_print(lang.getstr("vcgt.unknown_format",
+												   os.path.basename(profile.fileName)))
+							safe_print(lang.getstr("failure"))
+							results.append(display)
+							errors.append(lang.getstr("vcgt.unknown_format",
+													  os.path.basename(profile.fileName)))
+						continue
+					values = ([], [], [])
+					if not self._force_reload:
+						# Get video card gamma ramp
+						hdc = win32gui.CreateDC(moninfo["Device"], None, None)
+						ramp = ((ctypes.c_ushort * 256) * 3)()
+						try:
+							result = self.gdi32.GetDeviceGammaRamp(hdc, ramp)
+						except:
+							continue
+						finally:
+							win32gui.DeleteDC(hdc)
+						if not result:
+							continue
+						# Get ramp values
+						for j, channel in enumerate(ramp):
+							for k, v in enumerate(channel):
+								values[j].append([float(k), v])
+					# Check if video card matches profile vcgt
+					if values == vcgt_values:
+						continue
+					# Reload calibration.
+					# Convert vcgt to ushort_Array_256_Array_3
+					vcgt_ramp = ((ctypes.c_ushort * 256) * 3)()
+					for j in xrange(len(vcgt_values[0])):
+						for k, channel in enumerate("RGB"):
+							vcgt_ramp[k][j] = vcgt_values[k][j][1]
+					if not self._force_reload:
+						safe_print(lang.getstr("vcgt.mismatch", display))
+					# Try and prevent race condition with madVR
+					# launching and resetting video card gamma table
+					apply_profiles = self._should_apply_profiles(first_run)
+					if not apply_profiles:
+						break
+					# Now actually reload calibration
+					safe_print(lang.getstr("calibration.loading_from_display_profile"))
+					safe_print(display, "->", os.path.basename(profile.fileName))
+					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
+					try:
+						result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
+					except Exception, exception:
+						result = exception
+					finally:
+						win32gui.DeleteDC(hdc)
+					if isinstance(result, Exception) or not result:
+						if result:
+							safe_print(result)
+						safe_print(lang.getstr("failure"))
+						errstr = lang.getstr("calibration.load_error")
+						errors.append(": ".join([display, errstr]))
+					else:
+						safe_print(lang.getstr("success"))
+						results.append(display)
+					##self.lock.release()
+					##self.apply_profiles(True, index=i)
+					##self.lock.acquire()
+				##self.lock.release()
+			self._force_reload = False
 			first_run = False
+			if results or errors:
+				self.notify(results, errors)
 			# Wait three seconds
 			timeout = 0
 			while wx.GetApp():
 				time.sleep(.1)
 				timeout += .1
-				if timeout > 2.9:
+				if timeout > 2.9 or self._force_reload:
 					break
+
+	def _enumerate_monitors(self):
+		from util_str import safe_unicode
+		from util_win import (get_active_display_device,
+							  get_real_display_devices_info)
+		self.monitors = []
+		for moninfo in get_real_display_devices_info():
+			# Get monitor descriptive string
+			device = get_active_display_device(moninfo["Device"])
+			if device:
+				display = safe_unicode(device.DeviceString)
+			else:
+				display = lang.getstr("unknown")
+			m_left, m_top, m_right, m_bottom = moninfo["Monitor"]
+			m_width = m_right - m_left
+			m_height = m_bottom - m_top
+			display = " @ ".join([display, 
+								  "%i, %i, %ix%i" %
+								  (m_left, m_top, m_width,
+								   m_height)])
+			self.monitors.append((display, moninfo))
 
 	def _enumerate_windows_callback(self, hwnd, extra):
 		import win32gui
@@ -440,7 +593,7 @@ class ProfileLoader(object):
 				name = win32process.GetModuleFileNameEx(handle, 0)
 				win32api.CloseHandle(handle)
 			except pywintypes.error:
-				return False
+				return
 			if os.path.basename(name).lower() not in ("madhcctrl.exe",
 													  "python.exe"):
 				self.__madvr_isrunning = True
@@ -454,19 +607,49 @@ class ProfileLoader(object):
 		if fallback:
 			# At launch, we won't be able to determine if madVR is running via
 			# the callback API.
+			import pywintypes
 			import win32gui
+			from log import safe_print
 			self.__madvr_isrunning = False
-			win32gui.EnumWindows(self._enumerate_windows_callback, None)
+			try:
+				win32gui.EnumWindows(self._enumerate_windows_callback, None)
+			except pywintypes.error, exception:
+				safe_print(exception)
 			return self.__madvr_isrunning
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
 								   component, instance, is_new_instance):
-		if ip in ("127.0.0.1", "localhost", "::1", "0:0:0:0:0:0:0:1"):
-			args = (param, connection, ip, pid, module, component, instance)
-			if is_new_instance:
-				self._madvr_instances.append(args)
-			elif args in self._madvr_instances:
-				self._madvr_instances.remove(args)
+		with self.lock:
+			import localization as lang
+			from log import safe_print
+			if ip in ("127.0.0.1", "localhost", "::1", "0:0:0:0:0:0:0:1"):
+				args = (param, connection, ip, pid, module, component, instance)
+				if is_new_instance:
+					if self._should_apply_profiles():
+						msg = lang.getstr("madvr.connected.calibration_loading_disabled")
+						safe_print(msg)
+						self.notify([], [msg], True)
+					self._madvr_instances.append(args)
+				elif args in self._madvr_instances:
+					self._madvr_instances.remove(args)
+					if self._should_apply_profiles():
+						msg = lang.getstr("madvr.disconnected.calibration_loading_enabled")
+						safe_print(msg)
+						self.notify([], [msg])
+
+	def _set_force_reload(self, event):
+		self._force_reload = True
+
+	def _should_apply_profiles(self, first_run=False):
+		import config
+		from config import appbasename
+		from util_win import calibration_management_isenabled
+		return (("--force" in sys.argv[1:] or
+				 (config.getcfg("profile.load_on_login") and
+				  not calibration_management_isenabled())) and
+				not os.path.isfile(os.path.join(config.confighome,
+												appbasename + ".lock")) and
+				not self._is_madvr_running(first_run))
 
 
 def main():
