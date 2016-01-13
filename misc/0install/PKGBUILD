@@ -22,6 +22,9 @@ package() {
 	cd "${srcdir}/${_pkgname}-${pkgver}"
 
 	PYTHONPATH=. python2 util/0install_desktop.py "$pkgdir/usr/share"
+
+    # Fix permissions - read for all, eXecute for directories and scripts
+    chmod -R +rX "${pkgdir}"
 }
 
 # vim:set ts=2 sw=2 et:
