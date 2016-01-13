@@ -195,7 +195,7 @@
 	"calibration.quality.medium": "Mittel",
 	"calibration.quality.ultra": "Ultra",
 	"calibration.quality.verylow": "Sehr niedrig",
-	"calibration.reload.info": "Kalibrierung wurde %i mal neu geladen.\nRechtsklick aufs Icon für Menü.",
+	"calibration.reload.info": "Kalibrierung wurde heute bisher %i mal (neu)geladen.\nRechtsklick aufs Icon für Menü.",
 	"calibration.reload_from_display_profiles": "Kalibrierung von aktuellen Anzeigegeräteprofilen neuladen",
 	"calibration.reset": "Grafikkarten-Gammatabelle zurücksetzen",
 	"calibration.reset_error": "Grafikkarten-Gammatabelle konnte nicht zurückgesetzt werden.",

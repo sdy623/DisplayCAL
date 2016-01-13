@@ -195,7 +195,7 @@
 	"calibration.quality.medium": "Medium",
 	"calibration.quality.ultra": "Ultra",
 	"calibration.quality.verylow": "Very low",
-	"calibration.reload.info": "Calibration was reloaded %i time(s).\nRight-click icon for menu.",
+	"calibration.reload.info": "Calibration was (re)loaded %i time(s) so far today.\nRight-click icon for menu.",
 	"calibration.reload_from_display_profiles": "Reload calibration from current display device profile(s)",
 	"calibration.reset": "Reset video card gamma table",
 	"calibration.reset_error": "Video card gamma table could not be reset.",

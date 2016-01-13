@@ -195,7 +195,7 @@
 	"calibration.quality.medium": "Media",
 	"calibration.quality.ultra": "Ultra",
 		"*calibration.quality.verylow": "Very low",
-		"*calibration.reload.info": "Calibration was reloaded %i time(s).\nRight-click icon for menu.",
+		"*calibration.reload.info": "Calibration was (re)loaded %i time(s) so far today.\nRight-click icon for menu.",
 		"*calibration.reload_from_display_profiles": "Reload calibration from current display device profile(s)",
 	"calibration.reset": "Ripristino curve calibrazione",
 	"calibration.reset_error": "Le curve calibrazione non possono essere ripristinate.",

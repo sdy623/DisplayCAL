@@ -31,6 +31,7 @@ class ProfileLoader(object):
 		self.monitors = []
 		self._force_reload = False
 		self._madvr_instances = []
+		self._timestamp = time.time()
 		apply_profiles = ("--force" in sys.argv[1:] or
 						  config.getcfg("profile.load_on_login"))
 		##if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
@@ -556,6 +557,13 @@ class ProfileLoader(object):
 				##self.lock.release()
 			self._force_reload = False
 			first_run = False
+			timestamp = time.time()
+			localtime = list(time.localtime(self._timestamp))
+			localtime[3:6] = 23, 59, 59
+			midnight = time.mktime(localtime) + 1
+			if timestamp >= midnight:
+				self.reload_count = 0
+				self._timestamp = timestamp
 			if results or errors:
 				self.notify(results, errors)
 			# Wait three seconds
