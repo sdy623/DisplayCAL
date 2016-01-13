@@ -80,7 +80,6 @@ class DisplayAdjustmentImageContainer(labelbook.ImageContainer):
 		"""
 		labelbook.ImageContainer.__init__(self, parent, id, pos, size, style,
 										  agwStyle, name)
-		scale = getcfg("app.dpi") / get_default_dpi()
 		imagelist = None
 		for img in ("tab_hilite", "tab_selected"):
 			bmp = getbitmap("theme/%s" % img)
@@ -426,9 +425,11 @@ class DisplayAdjustmentFlatImageBook(labelbook.FlatImageBook):
 		self._mainSizer.Add(self._pages, 0, wx.EXPAND)
 
 		if className == "FlatImageBook":
-		
+			scale = getcfg("app.dpi") / get_default_dpi()
+			if scale < 1:
+				scale = 1
 			if agwStyle & INB_LEFT or agwStyle & INB_RIGHT:
-				border = int(round(24 * getcfg("app.dpi") / get_default_dpi()))
+				border = int(round(24 * scale))
 				self._pages.SetSizeHints(self._pages._nImgSize + border, -1)
 			else:
 				self._pages.SetSizeHints(-1, self._pages._nImgSize)
@@ -832,7 +833,6 @@ class DisplayAdjustmentFrame(BaseFrame):
 		return self.Pulse(msg)
 
 	def _assign_image_list(self):
-		scale = getcfg("app.dpi") / get_default_dpi()
 		imagelist = None
 		modes = {CRT: {"black_luminance": "luminance",
 					   "luminance": "contrast"}}
@@ -884,6 +884,8 @@ class DisplayAdjustmentFrame(BaseFrame):
 		
 		# Set size
 		scale = getcfg("app.dpi") / get_default_dpi()
+		if scale < 1:
+			scale = 1
 		img_w, img_h = map(int, map(round, (84 * scale, 72 * scale)))
 		min_h = (img_h + 8) * (self.lb.GetPageCount() - len(self.lb.disabled_pages)) + 2 - 8
 		if init:
