@@ -6124,7 +6124,7 @@ usage: spotread [-options] [logfile]
 																appname +
 																"-apply-profiles.ico")), 0)
 			scut.SetArguments(" ".join(loader_args))
-			scut.SetShowCmd(win32con.SW_SHOWMINNOACTIVE)
+			scut.SetShowCmd(win32con.SW_SHOWDEFAULT)
 			if is_superuser():
 				if autostart:
 					try:
