@@ -93,9 +93,18 @@ class ProfileLoader(object):
 					super(TaskBarIcon, self).__init__()
 					self.pl = pl
 					self.balloon_text = None
-					self.SetIcon(config.get_bitmap_as_icon(16, appname +
-															   "-apply-profiles"),
-								 self.pl.get_title())
+					bitmap = config.geticon(16, appname + "-apply-profiles")
+					icon = wx.EmptyIcon()
+					icon.CopyFromBitmap(bitmap)
+					self._active_icon = icon
+					# Use Rec. 709 luma coefficients to convert to grayscale
+					image = bitmap.ConvertToImage().ConvertToGreyscale(.2126,
+																	   .7152,
+																	   .0722)
+					icon = wx.EmptyIcon()
+					icon.CopyFromBitmap(image.ConvertToBitmap())
+					self._inactive_icon = icon
+					self.set_visual_state(True)
 					self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
 
 				def CreatePopupMenu(self):
@@ -105,28 +114,53 @@ class ProfileLoader(object):
 					if (os.path.isfile(os.path.join(config.confighome,
 												   appbasename + ".lock")) or
 						self.pl._is_madvr_running()):
-						method = None
+						reload_auto = reload_manual = None
 					else:
 						##method = self.pl.apply_profiles_and_warn_on_error
-						method = self.pl._set_force_reload
-					for label, method in (("calibration.reload_from_display_profiles",
-										   method),
-										  ("-", None),
-										  ("menuitem.quit", self.pl.exit)):
+						reload_manual = self.pl._set_force_reload
+						reload_auto = self.set_auto_reload
+					for (label, method, checkable,
+						 option) in (("calibration.reload_from_display_profiles",
+									  reload_manual, False, None),
+									 ("calibration.reload_automatically",
+									  reload_auto, True,
+									  "profile.load_on_login"),
+									 ("-", None, False, None),
+									 ("menuitem.quit", self.pl.exit, False,
+									  None)):
 						if label == "-":
 							menu.AppendSeparator()
 						else:
-							item = wx.MenuItem(menu, -1, lang.getstr(label))
+							if checkable:
+								kind = wx.ITEM_CHECK
+							else:
+								kind = wx.ITEM_NORMAL
+							item = wx.MenuItem(menu, -1, lang.getstr(label),
+											   kind=kind)
 							if method is None:
 								item.Enable(False)
 							else:
 								menu.Bind(wx.EVT_MENU, method, id=item.Id)
 							menu.AppendItem(item)
+							if checkable:
+								item.Check(bool(config.getcfg(option)))
 
 					return menu
 
 				def on_left_down(self, event):
 					self.show_balloon()
+
+				def set_auto_reload(self, event):
+					config.setcfg("profile.load_on_login",
+								  int(event.IsChecked()))
+					self.set_visual_state()
+
+				def set_visual_state(self, first_run=False):
+					if self.pl._should_apply_profiles(first_run):
+						icon = self._active_icon
+					else:
+						icon = self._inactive_icon
+					self.SetIcon(icon, self.pl.get_title())
 
 				def show_balloon(self, text=None, sticky=False):
 					if wx.VERSION < (3, ):
@@ -321,6 +355,7 @@ class ProfileLoader(object):
 			self.reload_count += 1
 			results.insert(0, lang.getstr("calibration.load_success"))
 		results.extend(errors)
+		wx.CallAfter(lambda: self and self.taskbar_icon.set_visual_state())
 		wx.CallAfter(lambda text, sticky: self and
 										  self.taskbar_icon.show_balloon(text,
 																		 sticky),
@@ -391,6 +426,8 @@ class ProfileLoader(object):
 
 		import win32gui
 
+		import config
+		from config import appbasename
 		from defaultpaths import iccprofiles
 		import ICCProfile as ICCP
 		from wxwindows import wx
@@ -403,6 +440,8 @@ class ProfileLoader(object):
 		first_run = True
 		self.profile_associations = {}
 		self.profiles = {}
+		displaycal_lockfile = os.path.join(config.confighome, appbasename + ".lock")
+		displaycal_running = os.path.isfile(displaycal_lockfile)
 		while wx.GetApp():
 			results = []
 			errors = []
@@ -566,6 +605,17 @@ class ProfileLoader(object):
 				self._timestamp = timestamp
 			if results or errors:
 				self.notify(results, errors)
+			else:
+				if displaycal_running != self._displaycal_running:
+					if displaycal_running:
+						msg = lang.getstr("app.disconnected.calibration_loading_enabled",
+										  appname)
+					else:
+						msg = lang.getstr("app.connected.calibration_loading_disabled",
+										  appname)
+					displaycal_running = self._displaycal_running
+					safe_print(msg)
+					self.notify([], [msg], displaycal_running)
 			# Wait three seconds
 			timeout = 0
 			while wx.GetApp():
@@ -643,15 +693,18 @@ class ProfileLoader(object):
 			if ip in ("127.0.0.1", "localhost", "::1", "0:0:0:0:0:0:0:1"):
 				args = (param, connection, ip, pid, module, component, instance)
 				if is_new_instance:
-					if self._should_apply_profiles():
-						msg = lang.getstr("madvr.connected.calibration_loading_disabled")
+					apply_profiles = self._should_apply_profiles()
+					self._madvr_instances.append(args)
+					if apply_profiles:
+						msg = lang.getstr("app.connected.calibration_loading_disabled",
+										  component)
 						safe_print(msg)
 						self.notify([], [msg], True)
-					self._madvr_instances.append(args)
 				elif args in self._madvr_instances:
 					self._madvr_instances.remove(args)
 					if self._should_apply_profiles():
-						msg = lang.getstr("madvr.disconnected.calibration_loading_enabled")
+						msg = lang.getstr("app.disconnected.calibration_loading_enabled",
+										  component)
 						safe_print(msg)
 						self.notify([], [msg])
 
@@ -662,11 +715,13 @@ class ProfileLoader(object):
 		import config
 		from config import appbasename
 		from util_win import calibration_management_isenabled
+		displaycal_lockfile = os.path.join(config.confighome,
+										   appbasename + ".lock")
+		self._displaycal_running = os.path.isfile(displaycal_lockfile)
 		return (("--force" in sys.argv[1:] or
 				 (config.getcfg("profile.load_on_login") and
 				  not calibration_management_isenabled())) and
-				not os.path.isfile(os.path.join(config.confighome,
-												appbasename + ".lock")) and
+				not self._displaycal_running and
 				not self._is_madvr_running(first_run))
 
 
