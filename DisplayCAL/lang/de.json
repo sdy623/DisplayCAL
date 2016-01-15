@@ -425,7 +425,7 @@
 	"display_short": "Anzeigegerät (Kurzname)",
 	"displayport": "DisplayPort",
 	"dlp_screen": "DLP-Bildschirm",
-	"donation_header": "Ihre Unterstützung ist eine große Hilfe!",
+	"donation_header": "Ihre Unterstützung ist willkommen!",
 	"donation_message": "Bitte erwägen Sie einen finanziellen Beitrag, falls Sie die Entwicklung von, technische Hilfestellung für, und weitere Verfügbarkeit von DisplayCAL und Argyll CMS unterstützen möchten. Da DisplayCAL ohne Argyll CMS nicht nutzbar ist, werden alle erhaltenen finanziellen Beiträge auf beide Projekte aufgeteilt.\nFür nicht-kommerzielle, unregelmäßige private Verwendung ist ein einmaliger Beitrag angmessen. Falls Sie DisplayCAL professionell/kommerziell einsetzen, würde ein jährlicher oder monatlicher Beitrag die weitere Verfügbarkeit beider Projekte sehr unterstützen.\n\nDanke an alle Unterstützer!",
 	"download": "Herunterladen",
 	"download_fail_empty_response": "Download fehlgeschlagen: %s gab ein leeres Dokument zurück.",
