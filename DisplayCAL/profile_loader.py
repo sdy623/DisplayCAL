@@ -202,7 +202,8 @@ class ProfileLoader(object):
 				self.madvr = madvr.MadTPG()
 			except Exception, exception:
 				safe_print(exception)
-				self.taskbar_icon.show_balloon(safe_unicode(exception))
+				if safe_unicode(exception) != lang.getstr("madvr.not_found"):
+					self.taskbar_icon.show_balloon(safe_unicode(exception))
 			else:
 				self.madvr.add_connection_callback(self._madvr_connection_callback,
 												   None, "madVR")
