@@ -515,13 +515,15 @@ class ProfileLoader(object):
 						mtime = 0
 					if self.profile_associations.get(i) != (profile, mtime):
 						if not first_run:
+							device = get_active_display_device(moninfo["Device"])
+							if not device:
+								continue
 							safe_print(lang.getstr("display_detected"))
 							safe_print(display, "->", profile)
 							##self.lock.release()
 							##self.apply_profiles(True, index=i)
 							##self.lock.acquire()
 							##apply_profiles = False
-							device = get_active_display_device(moninfo["Device"])
 							self.devices2profiles[device.DeviceKey] = (device.DeviceString,
 																	   profile)
 						self.profile_associations[i] = (profile, mtime)
@@ -779,6 +781,8 @@ class ProfileLoader(object):
 														   profile)
 			# Set the active profile
 			device = get_active_display_device(moninfo["Device"])
+			if not device:
+				continue
 			try:
 				correct_profile = ICCP.get_display_profile(path_only=True,
 														   devicekey=device.DeviceKey)
