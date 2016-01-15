@@ -388,7 +388,9 @@ class ProfileLoader(object):
 			def do_not_show_again_handler(event=None):
 				config.setcfg("profile_loader.error.show_msg",
 							  int(not dlg.do_not_show_again_cb.GetValue()))
-				config.writecfg()
+				config.writecfg(module="apply-profiles",
+								options=("argyll.dir", "profile.load_on_login",
+										 "profile_loader"))
 			dlg.do_not_show_again_cb.Bind(wx.EVT_CHECKBOX, do_not_show_again_handler)
 			dlg.sizer3.Add(dlg.do_not_show_again_cb, flag=wx.TOP, border=12)
 			dlg.sizer0.SetSizeHints(dlg)
@@ -400,9 +402,9 @@ class ProfileLoader(object):
 	def exit(self, event=None):
 		from util_win import calibration_management_isenabled
 		from wxwindows import ConfirmDialog, wx
+		import config
 		if (self.frame and event.GetEventType() == wx.EVT_MENU.typeId and
 			not calibration_management_isenabled()):
-			import config
 			import localization as lang
 			from wxwindows import ConfirmDialog, wx
 			dlg = ConfirmDialog(None, msg=lang.getstr("profile_loader.exit_warning"), 
@@ -417,6 +419,9 @@ class ProfileLoader(object):
 				return
 		self.frame and self.frame.Destroy()
 		self.taskbar_icon and self.taskbar_icon.Destroy()
+		config.writecfg(module="apply-profiles",
+						options=("argyll.dir", "profile.load_on_login",
+								 "profile_loader"))
 
 	def get_title(self):
 		import localization as lang
@@ -653,7 +658,8 @@ class ProfileLoader(object):
 				timeout += .1
 				if timeout > 2.9 or self._force_reload:
 					break
-		self._reset_display_profile_associations()
+		if getcfg("profile_loader.fix_profile_associations"):
+			self._reset_display_profile_associations()
 
 	def _enumerate_monitors(self):
 		import localization as lang
@@ -864,7 +870,9 @@ def main():
 
 		if "--error-dialog" in sys.argv[1:]:
 			config.setcfg("profile_loader.error.show_msg", 1)
-			config.writecfg()
+			config.writecfg(module="apply-profiles",
+							options=("argyll.dir", "profile.load_on_login",
+									 "profile_loader"))
 
 		import localization as lang
 		lang.init()
