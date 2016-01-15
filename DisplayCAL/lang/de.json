@@ -842,6 +842,7 @@
 	"profile_connection_space_pcs": "Bezugsfarbraum (PCS)",
 	"profile_loader": "Profil-Lader",
 	"profile_loader.exit_warning": "Möchten Sie den Profil-Lader wirklich beenden? Die Kalibrierung wird dann nicht mehr automatisch neu geladen, wenn sich die Anzeigegerätekonfiguration ändert!",
+	"profile_loader.fix_profile_associations": "Profilzuweisungen automatisch reparieren",
 	"profiling": "Profilierung",
 	"profiling.complete": "Profilierung abgeschlossen!",
 	"profiling.incomplete": "Die Profilierung wurde nicht abgeschlossen.",

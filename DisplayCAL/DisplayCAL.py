@@ -2839,6 +2839,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			"profile.name.expanded",
 			"profile.save_path",
 			"profile_loader.error.show_msg",
+			"profile_loader.fix_profile_associations",
 			"profile_loader.verify_calibration",
 			"profile.update",
 			"position.x",

@@ -72,6 +72,8 @@ elif sys.platform == "win32":
 	if mscms:
 		mscms.WcsGetDefaultColorProfileSize.restype = ctypes.c_bool
 		mscms.WcsGetDefaultColorProfile.restype = ctypes.c_bool
+		mscms.WcsAssociateColorProfileWithDevice.restype = ctypes.c_bool
+		mscms.WcsDisassociateColorProfileFromDevice.restype = ctypes.c_bool
 elif sys.platform == "darwin":
 	from util_mac import osascript
 
@@ -560,17 +562,18 @@ def _x11_get_display_profile(display_no=0, x_hostname="", x_display=0,
 
 def get_display_profile(display_no=0, x_hostname="", x_display=0, 
 						x_screen=0, win_get_correct_profile=False,
-						path_only=False):
+						path_only=False, devicekey=None):
 	""" Return ICC Profile for display n or None """
 	profile = None
 	if sys.platform == "win32":
 		if not "win32api" in sys.modules:
 			raise ImportError("pywin32 not available")
-		# The ordering will work as long as Argyll continues using
-		# EnumDisplayMonitors
-		monitors = util_win.get_real_display_devices_info()
-		moninfo = monitors[display_no]
-		if not mscms:
+		if not devicekey:
+			# The ordering will work as long as Argyll continues using
+			# EnumDisplayMonitors
+			monitors = util_win.get_real_display_devices_info()
+			moninfo = monitors[display_no]
+		if not mscms and not devicekey:
 			# Via GetICMProfile. Sucks royally in a multi-monitor setup
 			# where one monitor is disabled, because it'll always get
 			# the profile of the first monitor regardless if that is the active
@@ -593,7 +596,9 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			finally:
 				win32gui.DeleteDC(dc)
 		else:
-			if win_get_correct_profile:
+			if devicekey:
+				device = None
+			elif win_get_correct_profile:
 				# This would be the correct way. Unfortunately that is not
 				# what other apps (or Windows itself) do.
 				device = util_win.get_active_display_device(moninfo["Device"])
@@ -604,19 +609,21 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 				# assignments.
 				device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
 			if device:
-				if mscms:
-					# Via WCS
-					return _wcs_get_display_profile(unicode(device.DeviceKey),
-													path_only=path_only)
-				# Via registry - NEVER
-				monkey = device.DeviceKey.split("\\")[-2:]  # pun totally intended
-				# current user
-				profile = _winreg_get_display_profile(monkey, True,
+				devicekey = device.DeviceKey
+		if devicekey:
+			if mscms:
+				# Via WCS
+				return _wcs_get_display_profile(unicode(devicekey),
+												path_only=path_only)
+			# Via registry - NEVER
+			monkey = devicekey.split("\\")[-2:]  # pun totally intended
+			# current user
+			profile = _winreg_get_display_profile(monkey, True,
+												  path_only=path_only)
+			if not profile:
+				# system
+				profile = _winreg_get_display_profile(monkey,
 													  path_only=path_only)
-				if not profile:
-					# system
-					profile = _winreg_get_display_profile(monkey,
-														  path_only=path_only)
 	else:
 		if sys.platform == "darwin":
 			if intlist(mac_ver()[0].split(".")) >= [10, 6]:
@@ -709,6 +716,38 @@ def get_display_profile(display_no=0, x_hostname="", x_display=0,
 			if profile:
 				break
 	return profile
+
+
+def _wcs_set_display_profile(devicekey, profile_name):
+	mscms.WcsDisassociateColorProfileFromDevice(
+		WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"],
+		profile_name, devicekey)
+	return mscms.WcsAssociateColorProfileWithDevice(
+		WCS_PROFILE_MANAGEMENT_SCOPE["CURRENT_USER"],
+		profile_name, devicekey)
+
+
+def set_display_profile(profile_name, display_no=0,
+						use_active_display_device=False, devicekey=None):
+	# Currently only implemented for Windows.
+	# The profile to be assigned has to be already installed!
+	if not devicekey:
+		monitors = util_win.get_real_display_devices_info()
+		moninfo = monitors[display_no]
+		if use_active_display_device:
+			# This would be the correct way. Unfortunately that is not
+			# what other apps (and Windows itself) do.
+			device = util_win.get_active_display_device(moninfo["Device"])
+		else:
+			# This is wrong, but it's what other apps (and Windows itself) use.
+			device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+		devicekey = device.DeviceKey
+	if mscms:
+		return _wcs_set_display_profile(unicode(devicekey),
+										profile_name)
+	else:
+		# TODO: Implement for XP
+		return False
 
 
 def hexrepr(bytestring, mapping=None):

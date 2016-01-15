@@ -844,6 +844,7 @@
 	"profile_connection_space_pcs": "Profile connection space (PCS)",
 	"profile_loader": "Profile loader",
 	"profile_loader.exit_warning": "Do you really want to quit the profile loader? Calibration will no longer be automatically reloaded if you change the display configuration!",
+	"profile_loader.fix_profile_associations": "Automatically fix profile associations",
 	"profiling": "Profiling",
 	"profiling.complete": "Profiling complete!",
 	"profiling.incomplete": "Profiling has not been finished.",

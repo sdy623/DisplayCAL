@@ -29,6 +29,8 @@ class ProfileLoader(object):
 		self.reload_count = 0
 		self.lock = threading.Lock()
 		self.monitors = []
+		self.devices2profiles = {}
+		self._skip = "--skip" in sys.argv[1:]
 		self._force_reload = False
 		self._madvr_instances = []
 		self._timestamp = time.time()
@@ -42,7 +44,7 @@ class ProfileLoader(object):
 				### isn't forced
 				##apply_profiles = False
 		if (sys.platform != "win32" and
-			apply_profiles and not "--skip" in sys.argv[1:] and
+			apply_profiles and not self._skip and
 			not os.path.isfile(os.path.join(config.confighome,
 											appbasename + ".lock")) and
 			not self._is_madvr_running(True)):
@@ -125,6 +127,10 @@ class ProfileLoader(object):
 									 ("calibration.reload_automatically",
 									  reload_auto, True,
 									  "profile.load_on_login"),
+									 ("profile_loader.fix_profile_associations",
+									  self.pl._toggle_fix_profile_associations,
+									  True,
+									  "profile_loader.fix_profile_associations"),
 									 ("-", None, False, None),
 									 ("menuitem.quit", self.pl.exit, False,
 									  None)):
@@ -427,12 +433,13 @@ class ProfileLoader(object):
 		import win32gui
 
 		import config
-		from config import appbasename
+		from config import appbasename, getcfg
 		from defaultpaths import iccprofiles
 		import ICCProfile as ICCP
 		from wxwindows import wx
 		import localization as lang
 		from log import safe_print
+		from util_win import get_active_display_device
 
 		display = None
 		current_display = None
@@ -470,6 +477,15 @@ class ProfileLoader(object):
 																	 ##enumerate_ports=False,
 																	 ##include_network_devices=False)
 							self._enumerate_monitors()
+							if getcfg("profile_loader.fix_profile_associations"):
+								# Work-around long-standing bug in applications
+								# querying the monitor profile not making sure
+								# to use the active display (this affects Windows
+								# itself as well) when only one display is
+								# active in a multi-monitor setup.
+								if not first_run:
+									self._reset_display_profile_associations()
+								self._set_display_profiles()
 					current_display = display
 					current_timestamp = timestamp
 				_winreg.CloseKey(subkey)
@@ -497,6 +513,9 @@ class ProfileLoader(object):
 							##self.apply_profiles(True, index=i)
 							##self.lock.acquire()
 							##apply_profiles = False
+							device = get_active_display_device(moninfo["Device"])
+							self.devices2profiles[device.DeviceKey] = (device.DeviceString,
+																	   profile)
 						self.profile_associations[i] = (profile, mtime)
 						self.profiles[profile] = None
 					# Check video card gamma table and (re)load calibration if
@@ -623,19 +642,26 @@ class ProfileLoader(object):
 				timeout += .1
 				if timeout > 2.9 or self._force_reload:
 					break
+		self._reset_display_profile_associations()
 
 	def _enumerate_monitors(self):
 		from util_str import safe_unicode
 		from util_win import (get_active_display_device,
 							  get_real_display_devices_info)
+		from edid import get_edid
 		self.monitors = []
-		for moninfo in get_real_display_devices_info():
+		for i, moninfo in enumerate(get_real_display_devices_info()):
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
 			if device:
 				display = safe_unicode(device.DeviceString)
 			else:
 				display = lang.getstr("unknown")
+			try:
+				edid = get_edid(i)
+			except:
+				edid = {}
+			display = edid.get("monitor_name", display)
 			m_left, m_top, m_right, m_bottom = moninfo["Monitor"]
 			m_width = m_right - m_left
 			m_height = m_bottom - m_top
@@ -708,6 +734,56 @@ class ProfileLoader(object):
 						safe_print(msg)
 						self.notify([], [msg])
 
+	def _reset_display_profile_associations(self):
+		import ICCProfile as ICCP
+		from log import safe_print
+		for devicekey, (devicestring, profile) in self.devices2profiles.iteritems():
+			if profile:
+				try:
+					current_profile = ICCP.get_display_profile(path_only=True,
+															   devicekey=devicekey)
+				except Exception, exception:
+					safe_print(exception)
+					continue
+				if current_profile and current_profile != profile:
+					safe_print("Resetting profile association for %s:" %
+							   devicestring, current_profile, "->", profile)
+					ICCP.set_display_profile(os.path.basename(profile),
+											 devicekey=devicekey)
+
+	def _set_display_profiles(self):
+		import win32api
+
+		import ICCProfile as ICCP
+		from log import safe_print
+		from util_win import get_active_display_device, get_display_devices
+		self.devices2profiles = {}
+		for i, (display, moninfo) in enumerate(self.monitors):
+			for device in get_display_devices(moninfo["Device"]):
+				try:
+					profile = ICCP.get_display_profile(path_only=True,
+													   devicekey=device.DeviceKey)
+				except Exception, exception:
+					safe_print(exception)
+					profile = None
+				self.devices2profiles[device.DeviceKey] = (device.DeviceString,
+														   profile)
+			# Set the active profile
+			device = get_active_display_device(moninfo["Device"])
+			try:
+				correct_profile = ICCP.get_display_profile(path_only=True,
+														   devicekey=device.DeviceKey)
+			except Exception, exception:
+				safe_print(exception)
+				continue
+			device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
+			current_profile = self.devices2profiles[device.DeviceKey][1]
+			if correct_profile and current_profile != correct_profile:
+				safe_print("Fixing profile association for %s:" % display,
+						   current_profile, "->", correct_profile)
+				ICCP.set_display_profile(os.path.basename(correct_profile),
+										 devicekey=device.DeviceKey)
+
 	def _set_force_reload(self, event):
 		self._force_reload = True
 
@@ -723,6 +799,15 @@ class ProfileLoader(object):
 				  not calibration_management_isenabled())) and
 				not self._displaycal_running and
 				not self._is_madvr_running(first_run))
+
+	def _toggle_fix_profile_associations(self, event):
+		from config import setcfg
+		setcfg("profile_loader.fix_profile_associations",
+			   int(event.IsChecked()))
+		if event.IsChecked():
+			self._set_display_profiles()
+		else:
+			self._reset_display_profile_associations()
 
 
 def main():

@@ -5501,6 +5501,11 @@ usage: spotread [-options] [logfile]
 		argyll_install = self._install_profile_argyll(profile_path,
 													  capture_output,
 													  skip_scripts, silent)
+		if argyll_install and sys.platform == "win32":
+			# Assign profile to active display
+			display_no = min(len(self.displays), getcfg("display.number")) - 1
+			ICCP.set_display_profile(os.path.basename(profile_path), display_no,
+									 use_active_display_device=True)
 		loader_install = None
 		profile = None
 		try:

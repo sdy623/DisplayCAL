@@ -128,14 +128,14 @@ def enable_per_user_profiles(enable=True, display_no=0):
 		return True
 
 
-def get_active_display_device(devicename):
+def get_display_devices(devicename):
 	"""
-	Get active display device of an output (there can only be one per output)
+	Get all display devices of an output (there can be several)
 	
-	Return value: display device object or None
+	Return value: list of display devices
 	
 	Example usage:
-	get_active_display_device('\\\\.\\DISPLAY1', 0)
+	get_display_devices('\\\\.\\DISPLAY1')
 	devicename = '\\\\.\\DISPLAYn' where n is a positive integer starting at 1
 	
 	"""
@@ -147,6 +147,21 @@ def get_active_display_device(devicename):
 		except pywintypes.error:
 			break
 		n += 1
+	return devices
+
+
+def get_active_display_device(devicename):
+	"""
+	Get active display device of an output (there can only be one per output)
+	
+	Return value: display device object or None
+	
+	Example usage:
+	get_active_display_device('\\\\.\\DISPLAY1')
+	devicename = '\\\\.\\DISPLAYn' where n is a positive integer starting at 1
+	
+	"""
+	devices = get_display_devices(devicename)
 	for device in devices:
 		if (device.StateFlags & DISPLAY_DEVICE_ACTIVE 
 			and (len(devices) == 1 or device.StateFlags & 
