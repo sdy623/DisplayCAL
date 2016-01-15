@@ -87,6 +87,7 @@
 					<input type="hidden" name="item_name" value="Contribution to Florian Hoech/${APPNAME}" />
 					<input type="hidden" name="no_shipping" value="1" />
 					<input type="hidden" name="lc" value="US" />
+					<INPUT TYPE="hidden" NAME="return" value="${URL}contribution_thank_you.html">
 					<select name="amount">
 						<option disabled="disabled">Home / Enthusiast Use</option>
 						<option value="10">10</option>
@@ -655,7 +656,7 @@
 				</li>
 				<li>
 					<p>Click <strong>“Calibrate &amp; profile”</strong>. That's it!</p>
-					<p>Refer to the <a href="#concept">documentation</a> for advanced usage instructions (optional).</p>
+					<p>Feel free to check out the <a href="${URL}wiki/">Wiki</a> for guides and tutorials, and refer to the <a href="#concept">documentation</a> for advanced usage instructions (optional).</p>
 					<p class="info"><strong>Linux only:</strong> If you can't access your instrument, choose “Install Argyll CMS instrument configuration files...” from the “Tools” menu (if that menu item is grayed out, the Argyll CMS version you're currently using has probably been installed from the distribution's repository and should already be setup correctly for instrument access). If you still cannot access the instrument, try unplugging and reconnecting it, or a reboot. If all else fails, read “<a href="http://argyllcms.com/doc/Installing_Linux.html">Installing Argyll CMS on Linux: Setting up instrument access</a>” in the Argyll CMS documentation.</p>
 				</li>
 			</ol>
@@ -1519,7 +1520,16 @@ Enter the IP address in the window that opens (port should already be filled) an
 				<h4>Profile installation</h4>
 
 				<p>When installing a profile after creating or updating it, a startup item to load its calibration curves 
-				automatically on login will be created (on Windows and Linux, Mac OS X does not need a loader). You may also prevent this loader from doing anything by removing the check in the “Load calibration curves on Login” checkbox in the profile installation dialog, and in case you are using Windows 7 or later, you may let the operating system handle calibration loading instead (note that the Windows 7 internal calibration loader does not offer the same high quality as the ${APPNAME}/Argyll CMS loader, due to wrong scaling and 8-bit quantization).</p>
+				automatically on login will be created (on Windows and Linux, Mac OS X does not need a loader). You may also prevent this loader from doing anything by removing the check in the “Load calibration curves on Login” checkbox in the profile installation dialog, and in case you are using Windows 7 or later, you may let the operating system handle calibration loading instead (note that the Windows 7 internal calibration loader does not offer the same high precision as the ${APPNAME} profile loader, due to wrong scaling and 8-bit quantization).</p>
+
+				<h4>Profile loader (Windows)</h4>
+
+				<p>Under Windows, the profile loader will stay in the taskbar tray and keep the calibration loaded. In addition, the profile loader is <a href="http://madvr.com/">madVR</a>-aware and will disable calibration loading if it detects e.g. madTPG or madVR being used by a video player. A right-click menu also allows you to manually reload calibration. There are a few other menu options:</p>
+
+				<ul>
+					<li><strong>Automatically reload calibration</strong> if it is lost for whatever reason. It may take up to three seconds until the calibration is automatically reloaded.</li>
+					<li><strong>Fix profile associations automatically</strong> when only one display is active in a multi-display setup. This is a work-around for applications (and Windows itself) querying the display profile not using the active display, which can lead to a wrong profile being used.</li>
+				</ul>
 			</div>
 
 			<div>
@@ -1562,7 +1572,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 					</dd>
 
 					<dt>3D LUT file format</dt>
-					<dd>Sets the output format for the 3D LUT. Currently supported are Autodesk/Kodak (<code>.3dl</code>), Iridas (<code>.cube</code>), eeColor (<code>.txt</code>), madVR (<code>.3dlut</code>), Pandora (<code>.mga</code>), Portable Network Graphic (<code>.png</code>), <a href="http://reshade.me/">ReShade</a> (<code>.png</code>, <code>.fx</code>) and Sony Imageworks (<code>.spi3d</code>). Note that an ICC device link profile (the ICC equivalent of an RGB-in/RGB-out 3D LUT) is always created as well.</dd>
+					<dd>Sets the output format for the 3D LUT. Currently supported are Autodesk/Kodak (<code>.3dl</code>), Iridas (<code>.cube</code>), eeColor (<code>.txt</code>), <a href="http://madvr.com/">madVR</a> (<code>.3dlut</code>), Pandora (<code>.mga</code>), Portable Network Graphic (<code>.png</code>), <a href="http://reshade.me/">ReShade</a> (<code>.png</code>, <code>.fx</code>) and Sony Imageworks (<code>.spi3d</code>). Note that an ICC device link profile (the ICC equivalent of an RGB-in/RGB-out 3D LUT) is always created as well.</dd>
 
 					<dt>Input/output encoding</dt>
 					<dd>Some 3D LUT formats allow you to set the input/output encoding. Note that in most cases, sensible defaults will be chosen depending on selected 3D LUT format, but may be application- or workflow-specific.</dd>
@@ -1620,7 +1630,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 						<strong>Using the simulation profile as target profile</strong> will override the profile set under “Settings”. Whitepoint simulation does not apply here because color management will not be used and the display device is expected to be in the state described by the simulation profile. This may be accomplished in several ways, for example the display may be calibrated internally or externally, by a 3D LUT or device link profile. If this setting is enabled, a few other options will be available:
 						<ul>
 							<li>
-								<strong>Enable 3D LUT</strong> (if using the madVR display device/madTPG under Windows, or a Prisma video processor). This allows you to check how well the 3D LUT transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with a DeviceLink profile.
+								<strong>Enable 3D LUT</strong> (if using the <a href="http://madvr.com/">madVR</a> display device/madTPG under Windows, or a Prisma video processor). This allows you to check how well the 3D LUT transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with a DeviceLink profile.
 							</li>
 							<li>
 								<strong>DeviceLink profile</strong>. This allows you to check how well the DeviceLink transforms the simulation colorspace to the display colorspace. Note this setting can not be used together with the “Enable 3D LUT” setting.
@@ -1681,7 +1691,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 
 				<h4 id="madvr">madVR test pattern generator</h4>
 
-				<p>${APPNAME} supports the madVR test pattern generator (madTPG) and madVR 3D LUT formats since version 1.5.2.5 when used together with Argyll CMS 1.6.0 or newer.</p>
+				<p>${APPNAME} supports the <a href="http://madvr.com/">madVR</a> test pattern generator (madTPG) and madVR 3D LUT formats since version 1.5.2.5 when used together with Argyll CMS 1.6.0 or newer.</p>
 
 				<h4 id="resolve">Resolve (10.1+) as pattern generator</h4>
 
@@ -1768,7 +1778,7 @@ Enter the IP address in the window that opens (port should already be filled) an
 						<dd>Because of the difficulty caused by TwinView and MergedFB in X11 based systems, you can optionally specify a separate display for accessing the video card gamma table hardware during calibration. You may be able to calibrate one screen, and then share the calibration with another screen. Profiling can be done independently to calibration on each screen. Normally ${APPNAME} will automatically detect if separate video card gamma table access is needed (and appropriate controls need to be displayed), but you may force it by selecting this menu entry.</dd>
 
 					<dt>Do not use  video card gamma table to apply calibration</dt>
-						<dd>Calibration will be applied to the test values for each measurement instead of being loaded into the video card gamma table, and also included in measurement data files, so that the profiler can include it as a vcgt tag in the resulting profile. This is <strong>not</strong> normally the best way to profile a calibrated display, since the frame buffer may have lower precision than the video card gamma table. This is the way calibration should be applied if madVR is being used to display the test patches.</dd>
+						<dd>Calibration will be applied to the test values for each measurement instead of being loaded into the video card gamma table, and also included in measurement data files, so that the profiler can include it as a vcgt tag in the resulting profile. This is <strong>not</strong> normally the best way to profile a calibrated display, since the frame buffer may have lower precision than the video card gamma table. This is the way calibration should be applied if <a href="http://madvr.com/">madVR</a> is being used to display the test patches.</dd>
 
 					<dt>Allow skipping of spectrometer self-calibration</dt>
 						<dd>Spectrometers require a sensor calibration before measurements. If this option is checked, ${APPNAME} will try to skip this sensor calibration. <em>Note</em> even if this option is checked, you may be forced to do a sensor calibration if the instrument requires it.</dd>
@@ -2336,12 +2346,12 @@ C:\Windows\system32\igfxpers.exe</code></pre></dd>
 			<ul>
 				<li>On first launch, guide user through basic setup using a wizard (postpone ${APPNAME} update check until after wizard has run?):
 					<ul>
-						<li><del>Check Argyll CMS availability, if not available or outdated, offer automatic download &amp; installation (consider 0install/native Linux distribution packages?)</del> (use 0install/native distribution packages, other users can download manually for now)</li>
+						<li><del>Check Argyll CMS availability, if not available or outdated, offer automatic download &amp; installation (consider 0install/native Linux distribution packages?)</del> (implemented)</li>
 						<li>Windows only: Install instrument drivers if necessary (probably need to check if already installed)</li>
 						<li>Check available instruments and instrument capabilities</li>
 						<li>Do instrument specific first launch stuff:
 							<ul>
-								<li>Import OEM files</li>
+								<li><del>Import OEM files</del> (implemented)</li>
 								<li>Choose/create colorimeter correction if applicable</li>
 							</ul>
 						</li>
@@ -2445,18 +2455,19 @@ Dilma Herrera</span></p>
 					<dd>
 						<h3>${VERSION_SHORT} ${STABILITY}</h3>
 
-						<h4>dispcalGUI has been rebranded as ${APPNAME}.</h4>
+						<h4>dispcalGUI has been renamed to ${APPNAME}.</h4>
 
-						<p><strong>Existing Linux 0install users:</strong> It is recommended that you download the respective <a href="${URL}#download">${APPNAME}-0install package</a> for your distribution and install it so that the applications accessible via the menu of your desktop environment are updated properly.</p>
+						<p><strong>If you upgrade using 0install under Linux:</strong> It is recommended that you download the respective <a href="${URL}#download">${APPNAME}-0install package</a> for your distribution and install it so that the applications accessible via the menu of your desktop environment are updated properly.</p>
 
-						<p><strong>Existing Mac OS X 0install users:</strong> It is recommended that you delete existing dispcalGUI application icons, then download the <a href="${URL}download/${APPNAME}-0install.dmg">${APPNAME}-0install.dmg</a> disk image to get updated applications.</p>
+						<p><strong>If you upgrade using 0install under Mac OS X:</strong> It is recommended that you delete existing dispcalGUI application icons, then download the <a href="${URL}download/${APPNAME}-0install.dmg">${APPNAME}-0install.dmg</a> disk image to get updated applications.</p>
 
 						<h4>Added in this release:</h4>
 						<ul>
-							<li><strong>HiDPI support (Windows/Linux).</strong> Icons will be scaled according to the scaling factor or DPI set in the display settings under Windows, or the respective font scaling or DPI system setting under Linux. Icons will be scaled down or up from their 2x version if a matching size is not available. Note that if you run a multi-monitor configuration, the application is system-DPI aware but not per-monitor-DPI aware, which is a limitation of wxPython/wxWidgets (under Windows, you will need to log out and back in after changing DPI settings for changes to take effect in ${APPNAME}).</li>
+							<li><strong>HiDPI support (Windows/Linux).</strong> Icons will be scaled according to the scaling factor or DPI set in the display settings under Windows, or the respective font scaling or DPI system setting under Linux. Icons will be scaled down or up from their 2x version if a matching size is not available. Note that if you run a multi-monitor configuration, the application is system-DPI aware but not per-monitor-DPI aware, which is a limitation of wxPython/wxWidgets (under Windows, you will need to log out and back in after changing DPI settings for changes to take effect in ${APPNAME}; under Linux, restarting ${APPNAME} itself will be enough).</li>
 							<li>When having created a compressed archive of a profile and related files, it can now also be imported back in via drag'n'drop or the “Load settings...” menu entry and respective button.</li>
 							<li>Argyll CMS can be automatically downloaded and updated.</li>
-							<li><strong>Windows: New profile loader.</strong> It will stay in the taskbar tray and automatically reload calibration if the display configuration changes.</li>
+							<li>A compressed logs archive can be created from the log window.</li>
+							<li><strong>Windows: New profile loader.</strong> It will stay in the taskbar tray and automatically reload calibration if the display configuration changes or if the calibration is lost. It eliminates the need for 3rd party utilities such as CPKeeper (Color Profile Keeper). It can also automatically fix profile associations when switching from a multi-monitor configuration to a single display and vice versa (only under Vista and later). In addition, the profile loader is <a href="http://madvr.com/">madVR</a>-aware and will disable calibration loading if it detects e.g. madTPG or madVR being used by a video player.</li>
 						</ul>
 						<h4>Changed in this release:</h4>
 						<ul>
@@ -2465,6 +2476,7 @@ Dilma Herrera</span></p>
 						<h4>Fixed in this release:</h4>
 						<ul>
 							<li>In some cases, importing colorimeter corrections from the vendor software CD could fail (falling back to downloading them from the web).</li>
+							<li>Minor: 1st launch defaults were slightly different from what was intended (testchart should be “Auto”).</li>
 						</ul>
 					</dd>
 
