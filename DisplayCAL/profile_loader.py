@@ -700,8 +700,9 @@ class ProfileLoader(object):
 				win32api.CloseHandle(handle)
 			except pywintypes.error:
 				return
-			if os.path.basename(name).lower() not in ("madhcctrl.exe",
-													  "python.exe"):
+			from config import exe
+			if (os.path.basename(name).lower() != "madhcctrl.exe" and
+				name.lower() != exe.lower()):
 				self.__madvr_isrunning = True
 
 	def _is_madvr_running(self, fallback=False):
