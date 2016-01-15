@@ -710,7 +710,7 @@ class ProfileLoader(object):
 			return
 		if len(self._madvr_instances):
 			return True
-		if fallback:
+		if fallback or not hasattr(self, "madvr"):
 			# At launch, we won't be able to determine if madVR is running via
 			# the callback API.
 			import pywintypes
