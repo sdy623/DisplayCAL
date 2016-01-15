@@ -456,9 +456,16 @@ class ProfileLoader(object):
 			##if not apply_profiles:
 				##self.profile_associations = {}
 			# Check if display configuration changed
-			key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
-								  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
-			numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
+			try:
+				key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
+									  r"SYSTEM\CurrentControlSet\Control\GraphicsDrivers\Configuration")
+			except WindowsError:
+				key = None
+				numsubkeys = 0
+				if not self.monitors:
+					self._enumerate_monitors()
+			else:
+				numsubkeys, numvalues, mtime = _winreg.QueryInfoKey(key)
 			for i in xrange(numsubkeys):
 				subkey = _winreg.OpenKey(key, _winreg.EnumKey(key, i))
 				display = _winreg.QueryValueEx(subkey, "SetId")[0]
@@ -489,7 +496,8 @@ class ProfileLoader(object):
 					current_display = display
 					current_timestamp = timestamp
 				_winreg.CloseKey(subkey)
-			_winreg.CloseKey(key)
+			if key:
+				_winreg.CloseKey(key)
 			# Check profile associations
 			if apply_profiles or first_run:
 				##self.lock.acquire()
@@ -645,6 +653,7 @@ class ProfileLoader(object):
 		self._reset_display_profile_associations()
 
 	def _enumerate_monitors(self):
+		import localization as lang
 		from util_str import safe_unicode
 		from util_win import (get_active_display_device,
 							  get_real_display_devices_info)
