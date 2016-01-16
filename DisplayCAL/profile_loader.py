@@ -34,6 +34,7 @@ class ProfileLoader(object):
 		self._force_reload = False
 		self._madvr_instances = []
 		self._timestamp = time.time()
+		self.__madvr_isrunning = False
 		apply_profiles = ("--force" in sys.argv[1:] or
 						  config.getcfg("profile.load_on_login"))
 		##if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
@@ -710,6 +711,8 @@ class ProfileLoader(object):
 			if (os.path.basename(name).lower() != "madhcctrl.exe" and
 				name.lower() != exe.lower()):
 				self.__madvr_isrunning = True
+				if os.path.basename(name).lower() == "madtpg.exe":
+					self.__madvr_component = "madTPG"
 
 	def _is_madvr_running(self, fallback=False):
 		""" Determine id madVR is in use (e.g. video playback, madTPG) """
@@ -723,11 +726,22 @@ class ProfileLoader(object):
 			import pywintypes
 			import win32gui
 			from log import safe_print
+			madvr_isrunning = self.__madvr_isrunning
 			self.__madvr_isrunning = False
+			self.__madvr_component = "madVR"
 			try:
 				win32gui.EnumWindows(self._enumerate_windows_callback, None)
 			except pywintypes.error, exception:
 				safe_print(exception)
+			if madvr_isrunning != self.__madvr_isrunning:
+				import localization as lang
+				if madvr_isrunning:
+					lstr = "app.disconnected.calibration_loading_enabled"
+				else:
+					lstr = "app.connected.calibration_loading_disabled"
+				msg = lang.getstr(lstr, self.__madvr_component)
+				safe_print(msg)
+				self.notify([], [msg], not madvr_isrunning)
 			return self.__madvr_isrunning
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
