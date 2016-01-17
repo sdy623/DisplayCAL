@@ -57,7 +57,7 @@ class ScriptingClientFrame(SimpleTerminal):
 				with open(self.historyfilename) as historyfile:
 					for line in historyfile:
 						self.history.append(safe_unicode(line,
-														 "UTF-8").rstrip("\n"))
+														 "UTF-8").rstrip("\r\n"))
 			except EnvironmentError, exception:
 				safe_print("Warning - couldn't read history file:", exception)
 		# Always have empty selection at bottom
@@ -117,7 +117,7 @@ class ScriptingClientFrame(SimpleTerminal):
 			with open(self.historyfilename, "wb") as historyfile:
 				for command in self.history:
 					if command:
-						historyfile.write(safe_str(command, "UTF-8") + "\n")
+						historyfile.write(safe_str(command, "UTF-8") + os.linesep)
 		except EnvironmentError, exception:
 			safe_print("Warning - couldn't write history file:", exception)
 		self.listening = False
