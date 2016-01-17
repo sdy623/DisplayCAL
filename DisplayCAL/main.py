@@ -124,25 +124,20 @@ def main(module=None):
 							# This shouldn't happen
 							safe_print("Warning - invalid port number:", port)
 							port = getcfg("app.port")
-					try:
-						appsocket = socket.socket(socket.AF_INET,
-												  socket.SOCK_STREAM)
-					except socket.error, exception:
-						# This shouldn't happen
-						safe_print("Warning - could not create TCP socket:",
-								   exception)
+					appsocket = AppSocket()
+					if not appsocket:
 						break
 					else:
-						try:
-							appsocket.connect((host, port))
-						except socket.error, exception:
-							# Other instance probably died
-							safe_print("Connection to %s:%s failed:" %
-									   (host, port), exception)
-							incoming = None
-						else:
+						incoming = None
+						if appsocket.connect(host, port):
 							# Other instance already running?
-							incoming = "?"
+							# Get appname to check if expected app is actually
+							# running under that port
+							if appsocket.send("getappname"):
+								incoming = appsocket.read()
+								if incoming.rstrip("\4") != pyname:
+									incoming = None
+						if incoming:
 							# Send module/appname and args as UTF-8
 							data = [module or appname]
 							if module != "3DLUT-maker":
@@ -150,24 +145,8 @@ def main(module=None):
 									data.append(safe_str(safe_unicode(arg),
 														 "UTF-8"))
 							data = sp.list2cmdline(data)
-							try:
-								appsocket.sendall(data + "\n")
-							except socket.error, exception:
-								# Connection lost?
-								safe_print("Warning - could not send data %r:" %
-										   data, exception)
-							else:
-								incoming = ""
-								while not "\4" in incoming:
-									try:
-										incoming += appsocket.recv(1024)
-									except socket.error, exception:
-										if exception.errno == errno.EWOULDBLOCK:
-											sleep(.05)
-											continue
-										safe_print("Warning - could not receive "
-												   "data:", exception)
-										break
+							if appsocket.send(data):
+								incoming = appsocket.read()
 						appsocket.close()
 						if incoming and incoming.rstrip("\4") == "ok":
 							# Successfully sent our request
@@ -186,13 +165,9 @@ def main(module=None):
 				return
 		lockfilename = os.path.join(confighome, "%s.lock" % name)
 		# Create listening socket
-		try:
-			sys._appsocket = socket.socket(socket.AF_INET,
-										   socket.SOCK_STREAM)
-		except socket.error, exception:
-			# This shouldn't happen
-			safe_print("Warning - could not create TCP socket:", exception)
-		else:
+		appsocket = AppSocket()
+		if appsocket:
+			sys._appsocket = appsocket.socket
 			if getcfg("app.allow_network_clients"):
 				host = ""
 			for port in (getcfg("app.port"), 0):
@@ -363,16 +338,11 @@ def _exit(lockfilename, port):
 				except ValueError:
 					# This shouldn't happen
 					continue
-				try:
-					appsocket = socket.socket(socket.AF_INET,
-											  socket.SOCK_STREAM)
-				except socket.error, exception:
-					# This shouldn't happen
-					safe_print("Warning - could not create TCP socket:",
-							   exception)
+				appsocket = AppSocket()
+				if not appsocket:
 					break
 				try:
-					appsocket.connect(("127.0.0.1", port))
+					appsocket.connect("127.0.0.1", port)
 				except socket.error, exception:
 					# Other instance probably died
 					safe_print("Connection to 127.0.0.1:%s failed:" % port,
@@ -422,6 +392,54 @@ def write_lockfile(lockfilename, mode, contents):
 		# This shouldn't happen
 		safe_print("Warning - could not write lockfile %s:" % lockfilename,
 				   exception)
+
+
+class AppSocket(object):
+
+	def __init__(self):
+		try:
+			self.socket = socket.socket(socket.AF_INET,
+										socket.SOCK_STREAM)
+		except socket.error, exception:
+			# This shouldn't happen
+			safe_print("Warning - could not create TCP socket:", exception)
+
+	def __getattr__(self, name):
+		return getattr(self.socket, name)
+
+	def __nonzero__(self):
+		return hasattr(self, "socket")
+
+	def connect(self, host, port):
+		try:
+			self.socket.connect((host, port))
+		except socket.error, exception:
+			# Other instance probably died
+			safe_print("Connection to %s:%s failed:" % (host, port), exception)
+			return False
+		return True
+
+	def read(self):
+		incoming = ""
+		while not "\4" in incoming:
+			try:
+				incoming += self.socket.recv(1024)
+			except socket.error, exception:
+				if exception.errno == errno.EWOULDBLOCK:
+					sleep(.05)
+					continue
+				safe_print("Warning - could not receive data:", exception)
+				break
+		return incoming
+
+	def send(self, data):
+		try:
+			self.socket.sendall(data + "\n")
+		except socket.error, exception:
+			# Connection lost?
+			safe_print("Warning - could not send data %r:" % data, exception)
+			return False
+		return True
 
 
 class Error(Exception):
