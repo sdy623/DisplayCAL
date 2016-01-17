@@ -23,7 +23,7 @@ import audio
 import config
 from config import (defaults, getbitmap, getcfg, geticon, get_data_path,
 					get_default_dpi, get_verified_path, pyname, setcfg,
-					confighome, appbasename, logdir)
+					confighome, appbasename, logdir, set_default_app_dpi)
 from debughelpers import getevtobjname, getevttype, handle_error
 from log import log as log_, safe_print
 from meta import name as appname
@@ -534,6 +534,7 @@ class BaseApp(wx.App):
 
 	def OnInit(self):
 		self.AppName = pyname
+		set_default_app_dpi()
 		return True
 
 	def MacOpenFiles(self, paths):
