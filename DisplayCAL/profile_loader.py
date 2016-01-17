@@ -31,7 +31,8 @@ class ProfileLoader(object):
 		self.monitors = []
 		self.devices2profiles = {}
 		self._skip = "--skip" in sys.argv[1:]
-		self._force_reload = False
+		self._manual_restore = False
+		self._reset_gamma_ramps = config.getcfg("profile_loader.reset_gamma_ramps")
 		self._madvr_instances = []
 		self._timestamp = time.time()
 		self.__madvr_isrunning = False
@@ -82,7 +83,7 @@ class ProfileLoader(object):
 							self.pl._is_madvr_running()):
 							return "forbidden"
 						elif sys.platform == "win32":
-							self.pl._set_force_reload()
+							self.pl._set_manual_restore(None)
 						else:
 							self.pl.apply_profiles(True)
 						return self.pl.errors or "ok"
@@ -117,31 +118,35 @@ class ProfileLoader(object):
 					if (os.path.isfile(os.path.join(config.confighome,
 												   appbasename + ".lock")) or
 						self.pl._is_madvr_running()):
-						reload_auto = reload_manual = None
+						restore_auto = restore_manual = reset = None
 					else:
 						##method = self.pl.apply_profiles_and_warn_on_error
-						reload_manual = self.pl._set_force_reload
-						reload_auto = self.set_auto_reload
-					for (label, method, checkable,
-						 option) in (("calibration.reload_from_display_profiles",
-									  reload_manual, False, None),
-									 ("calibration.reload_automatically",
-									  reload_auto, True,
-									  "profile.load_on_login"),
+						restore_manual = self.pl._set_manual_restore
+						restore_auto = self.set_auto_restore
+						reset = self.pl._set_reset_gamma_ramps
+					for (label, method, kind, option,
+						 oxform) in (("calibration.reload_from_display_profiles",
+									  restore_manual, wx.ITEM_RADIO,
+									  "profile_loader.reset_gamma_ramps",
+									  lambda v: not v),
+									 ("calibration.reset",
+									  reset, wx.ITEM_RADIO,
+									  "profile_loader.reset_gamma_ramps", None),
+									 ("-", None, False, None, None),
+									 ("calibration.preserve",
+									  restore_auto, wx.ITEM_CHECK,
+									  "profile.load_on_login", None),
 									 ("profile_loader.fix_profile_associations",
 									  self.pl._toggle_fix_profile_associations,
-									  True,
-									  "profile_loader.fix_profile_associations"),
-									 ("-", None, False, None),
+									  wx.ITEM_CHECK,
+									  "profile_loader.fix_profile_associations",
+									  None),
+									 ("-", None, False, None, None),
 									 ("menuitem.quit", self.pl.exit, False,
-									  None)):
+									  None, None)):
 						if label == "-":
 							menu.AppendSeparator()
 						else:
-							if checkable:
-								kind = wx.ITEM_CHECK
-							else:
-								kind = wx.ITEM_NORMAL
 							item = wx.MenuItem(menu, -1, lang.getstr(label),
 											   kind=kind)
 							if method is None:
@@ -149,15 +154,21 @@ class ProfileLoader(object):
 							else:
 								menu.Bind(wx.EVT_MENU, method, id=item.Id)
 							menu.AppendItem(item)
-							if checkable:
-								item.Check(bool(config.getcfg(option)))
+							if kind != wx.ITEM_NORMAL:
+								if (option == "profile.load_on_login" and
+									"--force" in sys.argv[1:]):
+									item.Check(True)
+								else:
+									if not oxform:
+										oxform = bool
+									item.Check(oxform(config.getcfg(option)))
 
 					return menu
 
 				def on_left_down(self, event):
 					self.show_balloon()
 
-				def set_auto_reload(self, event):
+				def set_auto_restore(self, event):
 					config.setcfg("profile.load_on_login",
 								  int(event.IsChecked()))
 					self.set_visual_state()
@@ -362,7 +373,11 @@ class ProfileLoader(object):
 		if results:
 			import localization as lang
 			self.reload_count += 1
-			results.insert(0, lang.getstr("calibration.load_success"))
+			if self._reset_gamma_ramps:
+				lstr = "calibration.reset_success"
+			else:
+				lstr = "calibration.load_success"
+			results.insert(0, lang.getstr(lstr))
 		results.extend(errors)
 		wx.CallAfter(lambda: self and self.taskbar_icon.set_visual_state())
 		wx.CallAfter(lambda text, sticky: self and
@@ -542,23 +557,25 @@ class ProfileLoader(object):
 					# necessary
 					if not apply_profiles or not self.gdi32:
 						continue
-					# Get display profile
-					if not self.profiles.get(profile):
-						try:
-							self.profiles[profile] = ICCP.ICCProfile(profile)
-							self.profiles[profile].tags.get("vcgt")
-						except Exception, exception:
-							continue
-					profile = self.profiles[profile]
 					vcgt_values = ([], [], [])
-					if isinstance(profile.tags.get("vcgt"),
-								  ICCP.VideoCardGammaType):
-						# Get display profile vcgt
-						vcgt_values = profile.tags.vcgt.get_values()[:3]
+					if not self._reset_gamma_ramps:
+						# Get display profile
+						if not self.profiles.get(profile):
+							try:
+								self.profiles[profile] = ICCP.ICCProfile(profile)
+								self.profiles[profile].tags.get("vcgt")
+							except Exception, exception:
+								continue
+						profile = self.profiles[profile]
+						if isinstance(profile.tags.get("vcgt"),
+									  ICCP.VideoCardGammaType):
+							# Get display profile vcgt
+							vcgt_values = profile.tags.vcgt.get_values()[:3]
 					if len(vcgt_values[0]) != 256:
 						# Hmm. Do we need to deal with this?
 						# I've never seen table-based vcgt with != 256 entries
-						if self._force_reload and profile.tags.get("vcgt"):
+						if (not self._reset_gamma_ramps and
+							self._manual_restore and profile.tags.get("vcgt")):
 							safe_print(lang.getstr("calibration.loading_from_display_profile"))
 							safe_print(display)
 							safe_print(lang.getstr("vcgt.unknown_format",
@@ -578,7 +595,7 @@ class ProfileLoader(object):
 						vcgt = ICCP.VideoCardGammaFormulaType(tagData, "vcgt")
 						vcgt_values = vcgt.get_values()[:3]
 					values = ([], [], [])
-					if not self._force_reload:
+					if not self._manual_restore:
 						# Get video card gamma ramp
 						hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 						ramp = ((ctypes.c_ushort * 256) * 3)()
@@ -603,16 +620,20 @@ class ProfileLoader(object):
 					for j in xrange(len(vcgt_values[0])):
 						for k in xrange(3):
 							vcgt_ramp[k][j] = vcgt_values[k][j][1]
-					if not self._force_reload:
+					if not self._manual_restore:
 						safe_print(lang.getstr("vcgt.mismatch", display))
 					# Try and prevent race condition with madVR
 					# launching and resetting video card gamma table
 					apply_profiles = self._should_apply_profiles(first_run)
 					if not apply_profiles:
 						break
-					# Now actually reload calibration
-					safe_print(lang.getstr("calibration.loading_from_display_profile"))
-					safe_print(display, "->", os.path.basename(profile.fileName))
+					# Now actually reload or reset calibration
+					if self._reset_gamma_ramps:
+						safe_print(lang.getstr("calibration.resetting"))
+						safe_print(display)
+					else:
+						safe_print(lang.getstr("calibration.loading_from_display_profile"))
+						safe_print(display, "->", os.path.basename(profile.fileName))
 					hdc = win32gui.CreateDC(moninfo["Device"], None, None)
 					try:
 						result = self.gdi32.SetDeviceGammaRamp(hdc, vcgt_ramp)
@@ -633,7 +654,7 @@ class ProfileLoader(object):
 					##self.apply_profiles(True, index=i)
 					##self.lock.acquire()
 				##self.lock.release()
-			self._force_reload = False
+			self._manual_restore = False
 			first_run = False
 			timestamp = time.time()
 			localtime = list(time.localtime(self._timestamp))
@@ -660,7 +681,7 @@ class ProfileLoader(object):
 			while wx.GetApp() and wx.GetApp().IsMainLoopRunning():
 				time.sleep(.1)
 				timeout += .1
-				if timeout > 2.9 or self._force_reload:
+				if timeout > 2.9 or self._manual_restore:
 					break
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
@@ -823,8 +844,17 @@ class ProfileLoader(object):
 				ICCP.set_display_profile(os.path.basename(correct_profile),
 										 devicekey=device.DeviceKey)
 
-	def _set_force_reload(self, event):
-		self._force_reload = True
+	def _set_manual_restore(self, event):
+		from config import setcfg
+		setcfg("profile_loader.reset_gamma_ramps", 0)
+		self._manual_restore = True
+		self._reset_gamma_ramps = False
+
+	def _set_reset_gamma_ramps(self, event):
+		from config import setcfg
+		setcfg("profile_loader.reset_gamma_ramps", 1)
+		self._manual_restore = True
+		self._reset_gamma_ramps = True
 
 	def _should_apply_profiles(self, first_run=False):
 		import config
@@ -834,6 +864,7 @@ class ProfileLoader(object):
 										   appbasename + ".lock")
 		self._displaycal_running = os.path.isfile(displaycal_lockfile)
 		return (("--force" in sys.argv[1:] or
+				self._manual_restore or
 				 (config.getcfg("profile.load_on_login") and
 				  not calibration_management_isenabled())) and
 				not self._displaycal_running and

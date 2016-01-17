@@ -905,6 +905,7 @@ defaults = {
 	"profile.update": 0,
 	"profile_loader.error.show_msg": 1,
 	"profile_loader.fix_profile_associations": 1,
+	"profile_loader.reset_gamma_ramps": 0,
 	"profile_loader.verify_calibration": 0,
 	"recent_cals": "",
 	"report.pack_js": 1,
