@@ -1546,7 +1546,7 @@ def writecfg(which="user", worker=None, module=None, options=()):
 			# Sorting works as long as config has only one section
 			lines = lines[:1] + sorted(optionlines)
 			cfgfile = open(cfgfilename, "wb")
-			cfgfile.write("\n".join(lines))
+			cfgfile.write(os.linesep.join(lines) + os.linesep)
 			cfgfile.close()
 		except Exception, exception:
 			from log import safe_print
@@ -1564,9 +1564,10 @@ def writecfg(which="user", worker=None, module=None, options=()):
 		try:
 			cfgfile = open(cfgfilename, "wb")
 			if getcfg("argyll.dir"):
-				cfgfile.write("\n".join(["[Default]",
+				cfgfile.write(os.linesep.join(["[Default]",
 										 "%s = %s" % ("argyll.dir", 
-													  getcfg("argyll.dir"))]))
+													  getcfg("argyll.dir"))]) +
+							  os.linesep)
 			cfgfile.close()
 			if sys.platform != "win32":
 				# on Linux and OS X, we write the file to the users's config dir
