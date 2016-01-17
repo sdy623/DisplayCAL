@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import atexit
 import os
 import re
 import shutil
@@ -1266,13 +1265,15 @@ class TempXmlResource(object):
 									   os.path.basename(xmlpath))
 				with open(xmlpath, "wb") as xmlfile:
 					xmlfile.write(xml)
-				atexit.register(self._cleanup)
+				from wxwindows import BaseApp
+				BaseApp.register_exitfunc(self._cleanup)
 		self.xmlpath = xmlpath
 		self.res = xrc.XmlResource(xmlpath)
 
 	def _cleanup(self):
 		if (TempXmlResource._temp and
-			self.xmlpath.startswith(TempXmlResource._temp + os.path.sep)):
+			self.xmlpath.startswith(TempXmlResource._temp + os.path.sep) and
+			os.path.isfile(self.xmlpath)):
 			os.remove(self.xmlpath)
 			if not os.listdir(TempXmlResource._temp):
 				shutil.rmtree(TempXmlResource._temp)

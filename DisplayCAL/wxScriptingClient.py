@@ -120,6 +120,7 @@ class ScriptingClientFrame(SimpleTerminal):
 						historyfile.write(safe_str(command, "UTF-8") + "\n")
 		except EnvironmentError, exception:
 			safe_print("Warning - couldn't write history file:", exception)
+		self.listening = False
 		self.Destroy()
 
 	def OnMove(self, event=None):

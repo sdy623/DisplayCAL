@@ -20,9 +20,9 @@ class ProfileLoader(object):
 		import config
 		from config import appbasename
 		from worker import Worker
-		from wxwindows import wx
+		from wxwindows import BaseApp, wx
 		if not wx.GetApp():
-			app = wx.App(0)
+			app = BaseApp(0)
 		else:
 			app = None
 		self.worker = Worker()
@@ -215,7 +215,8 @@ class ProfileLoader(object):
 
 			self.frame.listen()
 
-			self._check_display_conf_thread = threading.Thread(target=self._check_display_conf)
+			self._check_display_conf_thread = threading.Thread(target=self._check_display_conf,
+															   name="DisplayConfigurationMonitoring")
 			self._check_display_conf_thread.start()
 
 			if app:
@@ -418,11 +419,13 @@ class ProfileLoader(object):
 			dlg.Destroy()
 			if result != wx.ID_OK:
 				return
-		self.frame and self.frame.Destroy()
-		self.taskbar_icon and self.taskbar_icon.Destroy()
+			self.frame.Close()
+			return
 		config.writecfg(module="apply-profiles",
 						options=("argyll.dir", "profile.load_on_login",
 								 "profile_loader"))
+		self.taskbar_icon and self.taskbar_icon.Destroy()
+		event.Skip()
 
 	def get_title(self):
 		import localization as lang
@@ -456,7 +459,7 @@ class ProfileLoader(object):
 		self.profiles = {}
 		displaycal_lockfile = os.path.join(config.confighome, appbasename + ".lock")
 		displaycal_running = os.path.isfile(displaycal_lockfile)
-		while wx.GetApp():
+		while wx.GetApp() and wx.GetApp().IsMainLoopRunning():
 			results = []
 			errors = []
 			apply_profiles = self._should_apply_profiles(first_run)
@@ -654,13 +657,14 @@ class ProfileLoader(object):
 					self.notify([], [msg], displaycal_running)
 			# Wait three seconds
 			timeout = 0
-			while wx.GetApp():
+			while wx.GetApp() and wx.GetApp().IsMainLoopRunning():
 				time.sleep(.1)
 				timeout += .1
 				if timeout > 2.9 or self._force_reload:
 					break
 		if getcfg("profile_loader.fix_profile_associations"):
 			self._reset_display_profile_associations()
+		safe_print("Display configuration monitoring thread finished")
 
 	def _enumerate_monitors(self):
 		import localization as lang

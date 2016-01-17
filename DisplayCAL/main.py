@@ -38,6 +38,7 @@ if sys.platform == "win32":
 	from util_win import win_ver
 	import ctypes
 from wxaddons import wx
+from wxwindows import BaseApp
 
 def _excepthook(etype, value, tb):
 	handle_error((etype, value, tb))
@@ -231,6 +232,7 @@ def main(module=None):
 						mode = "w"
 					write_lockfile(lockfilename, mode, str(port))
 					break
+		BaseApp.register_exitfunc(_exit, lockfilename, port)
 		# Check for required resource files
 		mod2res = {"3DLUT-maker": ["xrc/3dlut.xrc"],
 				   "curve-viewer": [],
@@ -331,9 +333,13 @@ def main(module=None):
 			error = Error(u"Fatal error: " +
 						  safe_unicode(traceback.format_exc()))
 		handle_error(error)
+
+
+def _exit(lockfilename, port):
 	for thread in threading.enumerate():
 		if (thread.isAlive() and thread is not threading.currentThread() and
 			not thread.isDaemon()):
+			safe_print("Waiting for thread %s to exit" % thread.getName())
 			thread.join()
 	if lockfilename and os.path.isfile(lockfilename):
 		# Each lockfile may contain multiple ports of running instances
@@ -383,6 +389,8 @@ def main(module=None):
 			except EnvironmentError, exception:
 				safe_print("Warning - could not remove lockfile %s: %r" %
 						   (lockfilename, exception))
+	safe_print("Exiting")
+	logging.shutdown()
 
 
 def main_3dlut_maker():

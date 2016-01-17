@@ -529,6 +529,9 @@ class BaseApp(wx.App):
 
 	""" Application base class implementing common functionality. """
 
+	_exithandlers = []
+	_mainloopexit = False
+
 	def OnInit(self):
 		self.AppName = pyname
 		return True
@@ -553,6 +556,53 @@ class BaseApp(wx.App):
 			self.MacOpenFiles(paths)
 			return paths
 
+	def ExitMainLoop(self):
+		BaseApp._mainloopexit = True
+		if self.TopWindow:
+			self.TopWindow.listening = False
+		BaseApp._run_exitfuncs()
+		return wx.App.ExitMainLoop(self)
+
+	@staticmethod
+	def IsMainLoopRunning():
+		return not BaseApp._mainloopexit and wx.App.IsMainLoopRunning()
+
+	def OnExit(self):
+		BaseApp._run_exitfuncs()
+
+	@staticmethod
+	def _run_exitfuncs():
+		"""run any registered exit functions
+
+		_exithandlers is traversed in reverse order so functions are executed
+		last in, first out.
+		"""
+		# Inspired by python's 'atexit' module.
+		# It's important that the exit handlers run *before* the actual main
+		# loop exits, otherwise they might not run at all if the app is closed
+		# externally (e.g. if the OS asks the app to close on logout).
+		# Using the 'atexit' module will NOT work!
+
+		exc_info = None
+		while BaseApp._exithandlers:
+			func, args, kwargs = BaseApp._exithandlers.pop()
+			try:
+				func(*args, **kwargs)
+			except SystemExit:
+				exc_info = sys.exc_info()
+			except:
+				import traceback
+				print >> sys.stderr, "Error in BaseApp._run_exitfuncs:"
+				traceback.print_exc()
+				exc_info = sys.exc_info()
+
+		if exc_info is not None:
+			raise exc_info[0], exc_info[1], exc_info[2]
+
+	@staticmethod
+	def register_exitfunc(func, *args, **kwargs):
+		BaseApp._exithandlers.append((func, args, kwargs))
+
 
 active_window = None
 responseformats = {}
@@ -572,8 +622,21 @@ class BaseFrame(wx.Frame):
 			if hasattr(child, "Name") and child.Name == name:
 				return child
 
+	def OnClose(self, event):
+		self.listening = False
+		if wx.GetApp().TopWindow is self and wx.GetApp().GetExitOnFrameDelete():
+			BaseApp._mainloopexit = True
+			BaseApp._run_exitfuncs()
+		event.Skip()
+
+	def OnDestroy(self, event):
+		self.listening = False
+		event.Skip()
+
 	def init(self):
 		self.Bind(wx.EVT_ACTIVATE, self.activate_handler)
+		self.Bind(wx.EVT_CLOSE, self.OnClose)
+		self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
 
 	def init_menubar(self):
 		self.MenuBar = wx.MenuBar()
@@ -598,7 +661,8 @@ class BaseFrame(wx.Frame):
 					pass
 			safe_print(lang.getstr("app.listening", (addr, port)))
 			self.listening = True
-			self.listener = threading.Thread(target=self.connection_handler)
+			self.listener = threading.Thread(target=self.connection_handler,
+											 name="ScriptingHost.ConnectionHandler")
 			self.listener.start()
 
 	def connect(self, ip, port):
@@ -616,6 +680,7 @@ class BaseFrame(wx.Frame):
 
 	def connection_handler(self):
 		""" Handle socket connections """
+		self._msghandlercount = 0
 		while self and getattr(self, "listening", False):
 			try:
 				# Wait for connection
@@ -642,7 +707,10 @@ class BaseFrame(wx.Frame):
 				sleep(.2)
 				continue
 			safe_print(lang.getstr("app.client.connect", addrport))
+			self._msghandlercount += 1
 			threading.Thread(target=self.message_handler,
+							 name="ScriptingHost.MessageHandler-%d" %
+								  self._msghandlercount,
 							 args=(conn, addrport)).start()
 		sys._appsocket.close()
 
