@@ -262,10 +262,7 @@ def get_real_display_devices_info():
 
 
 def get_windows_error(errorcode):
-	for name in dir(winerror):
-		if name.startswith("ERROR_") and getattr(winerror, name) == errorcode:
-			return WindowsError(errorcode, name)
-	return WindowsError(errorcode, "")
+	return ctypes.WinError(errorcode)
 
 
 def per_user_profiles_isenabled(display_no=0):
