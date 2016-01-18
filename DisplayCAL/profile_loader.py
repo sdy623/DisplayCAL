@@ -28,13 +28,15 @@ class ProfileLoader(object):
 		self.worker = Worker()
 		self.reload_count = 0
 		self.lock = threading.Lock()
+		self.monitoring = True
 		self.monitors = []
 		self.devices2profiles = {}
 		self._skip = "--skip" in sys.argv[1:]
 		self._manual_restore = False
 		self._reset_gamma_ramps = config.getcfg("profile_loader.reset_gamma_ramps")
-		self._known_apps = set(config.defaults["profile_loader.known_apps"].split(";") +
-							   config.getcfg("profile_loader.known_apps").split(";"))
+		self._known_apps = set([known_app.lower() for known_app in
+								config.defaults["profile_loader.known_apps"].split(";") +
+								config.getcfg("profile_loader.known_apps").split(";")])
 		self._known_window_classes = set(config.defaults["profile_loader.known_window_classes"].split(";") +
 										 config.getcfg("profile_loader.known_window_classes").split(";"))
 		self._madvr_instances = []
@@ -178,8 +180,8 @@ class ProfileLoader(object):
 								  int(event.IsChecked()))
 					self.set_visual_state()
 
-				def set_visual_state(self, first_run=False):
-					if self.pl._should_apply_profiles(first_run):
+				def set_visual_state(self, enumerate_windows_and_processes=False):
+					if self.pl._should_apply_profiles(enumerate_windows_and_processes):
 						icon = self._active_icon
 					else:
 						icon = self._inactive_icon
@@ -200,7 +202,7 @@ class ProfileLoader(object):
 							text = lang.getstr("calibration.load.handled_by_os") + "\n"
 						else:
 							text = ""
-						text += lang.getstr("calibration.reload.info",
+						text += lang.getstr("profile_loader.info",
 											self.pl.reload_count)
 					self.ShowBalloon(self.pl.get_title(), text, 100)
 
@@ -445,6 +447,7 @@ class ProfileLoader(object):
 						options=("argyll.dir", "profile.load_on_login",
 								 "profile_loader"))
 		self.taskbar_icon and self.taskbar_icon.Destroy()
+		self.monitoring = False
 		event.Skip()
 
 	def get_title(self):
@@ -479,10 +482,10 @@ class ProfileLoader(object):
 		self.profiles = {}
 		displaycal_lockfile = os.path.join(config.confighome, appbasename + ".lock")
 		displaycal_running = os.path.isfile(displaycal_lockfile)
-		while wx.GetApp() and wx.GetApp().IsMainLoopRunning():
+		while self and self.monitoring:
 			results = []
 			errors = []
-			apply_profiles = self._should_apply_profiles(first_run)
+			apply_profiles = self._should_apply_profiles()
 			##if not apply_profiles:
 				##self.profile_associations = {}
 			# Check if display configuration changed
@@ -629,7 +632,7 @@ class ProfileLoader(object):
 						safe_print(lang.getstr("vcgt.mismatch", display))
 					# Try and prevent race condition with madVR
 					# launching and resetting video card gamma table
-					apply_profiles = self._should_apply_profiles(first_run)
+					apply_profiles = self._should_apply_profiles()
 					if not apply_profiles:
 						break
 					# Now actually reload or reset calibration
@@ -683,7 +686,7 @@ class ProfileLoader(object):
 					self.notify([], [msg], displaycal_running)
 			# Wait three seconds
 			timeout = 0
-			while wx.GetApp() and wx.GetApp().IsMainLoopRunning():
+			while self and self.monitoring:
 				time.sleep(.1)
 				timeout += .1
 				if timeout > 2.9 or self._manual_restore:
@@ -744,7 +747,7 @@ class ProfileLoader(object):
 			if partial in cls:
 				return True
 
-	def _is_other_running(self, fallback=True):
+	def _is_other_running(self, enumerate_windows_and_processes=True):
 		"""
 		Determine if other software that may be using the videoLUT is in use 
 		(e.g. madVR video playback, madTPG, other calibration software)
@@ -753,10 +756,13 @@ class ProfileLoader(object):
 		if sys.platform != "win32":
 			return
 		if len(self._madvr_instances):
+			self.__other_isrunning = True
 			return True
-		if fallback or not hasattr(self, "madvr"):
+		if enumerate_windows_and_processes:
 			# At launch, we won't be able to determine if madVR is running via
-			# the callback API.
+			# the callback API, and we can only determine if another
+			# calibration solution is running by enumerating windows and
+			# processes anyway.
 			import pywintypes
 			import win32gui
 			import winerror
@@ -765,12 +771,15 @@ class ProfileLoader(object):
 			other_isrunning = self.__other_isrunning
 			self.__other_isrunning = False
 			# Look for known window classes
+			# Performance on C2D 3.16 GHz (Win7 x64, ~ 90 processes): ~ 1ms
 			try:
 				win32gui.EnumWindows(self._enumerate_windows_callback, None)
 			except pywintypes.error, exception:
 				safe_print(exception)
 			if not self.__other_isrunning:
 				# Look for known processes
+				# Performance on C2D 3.16 GHz (Win7 x64, ~ 90 processes):
+				# ~ 6-9ms (1ms to get PIDs)
 				try:
 					pids = get_pids()
 				except Exception, exception:
@@ -780,12 +789,12 @@ class ProfileLoader(object):
 						try:
 							filename = get_process_filename(pid)
 						except pywintypes.error, exception:
-							if exception.args[0] != winerror.ERROR_ACCESS_DENIED:
+							if exception.args[0] not in (winerror.ERROR_ACCESS_DENIED,
+														 winerror.ERROR_PARTIAL_COPY):
 								safe_print(exception)
 							continue
 						basename = os.path.basename(filename)
-						if basename.lower() in (app.lower() for app in
-												self._known_apps):
+						if basename.lower() in self._known_apps:
 							self.__other_isrunning = True
 							self.__other_component = os.path.splitext(basename)[0]
 							break
@@ -798,7 +807,7 @@ class ProfileLoader(object):
 				msg = lang.getstr(lstr, self.__other_component)
 				safe_print(msg)
 				self.notify([], [msg], not other_isrunning)
-			return self.__other_isrunning
+		return self.__other_isrunning
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
 								   component, instance, is_new_instance):
@@ -887,7 +896,7 @@ class ProfileLoader(object):
 		self._manual_restore = True
 		self._reset_gamma_ramps = True
 
-	def _should_apply_profiles(self, first_run=False):
+	def _should_apply_profiles(self, enumerate_windows_and_processes=True):
 		import config
 		from config import appbasename
 		from util_win import calibration_management_isenabled
@@ -899,7 +908,7 @@ class ProfileLoader(object):
 				 (config.getcfg("profile.load_on_login") and
 				  not calibration_management_isenabled())) and
 				not self._displaycal_running and
-				not self._is_other_running(first_run))
+				not self._is_other_running(enumerate_windows_and_processes))
 
 	def _toggle_fix_profile_associations(self, event):
 		from config import setcfg
