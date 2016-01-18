@@ -7,11 +7,21 @@ import sys
 
 import pywintypes
 import win32api
+import win32con
+import win32process
 import winerror
+
+from ctypes import byref, sizeof
+from ctypes.wintypes import DWORD
 
 if not hasattr(ctypes, "c_bool"):
 	# Python 2.5
 	ctypes.c_bool = ctypes.c_int
+
+try:
+	psapi = ctypes.windll.psapi
+except WindowsError:
+	psapi = None
 
 # http://msdn.microsoft.com/en-us/library/dd183569%28v=vs.85%29.aspx
 DISPLAY_DEVICE_ACTIVE = 0x1  # DISPLAY_DEVICE_ACTIVE specifies whether a monitor is presented as being "on" by the respective GDI view.
@@ -176,6 +186,31 @@ def get_display_device(display_no=0):
 	moninfo = monitors[display_no]
 	# via win32api & registry
 	return get_active_display_device(moninfo["Device"])
+
+
+def get_process_filename(pid):
+	handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION |
+								  win32con.PROCESS_VM_READ, False,
+								  pid)
+	filename = win32process.GetModuleFileNameEx(handle, 0)
+	win32api.CloseHandle(handle)
+	return filename
+
+
+def get_pids():
+	""" Get PIDs of all running processes """
+	pids_count = 1024
+	while True:
+		pids = (DWORD * pids_count)()
+		pids_size = sizeof(pids)
+		bytes = DWORD()
+		if not psapi.EnumProcesses(byref(pids), pids_size, byref(bytes)):
+			raise get_windows_error(ctypes.windll.kernel32.GetLastError())
+		if bytes.value >= pids_size:
+			pids_count *= 2
+			continue
+		count = bytes.value / (pids_size / pids_count)
+		return filter(None, pids[:count])
 
 
 def get_real_display_devices_info():

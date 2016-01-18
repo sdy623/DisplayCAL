@@ -33,9 +33,14 @@ class ProfileLoader(object):
 		self._skip = "--skip" in sys.argv[1:]
 		self._manual_restore = False
 		self._reset_gamma_ramps = config.getcfg("profile_loader.reset_gamma_ramps")
+		self._known_apps = set(config.defaults["profile_loader.known_apps"].split(";") +
+							   config.getcfg("profile_loader.known_apps").split(";"))
+		self._known_window_classes = set(config.defaults["profile_loader.known_window_classes"].split(";") +
+										 config.getcfg("profile_loader.known_window_classes").split(";"))
 		self._madvr_instances = []
 		self._timestamp = time.time()
-		self.__madvr_isrunning = False
+		self.__other_component = None
+		self.__other_isrunning = False
 		apply_profiles = ("--force" in sys.argv[1:] or
 						  config.getcfg("profile.load_on_login"))
 		##if (sys.platform == "win32" and not "--force" in sys.argv[1:] and
@@ -49,7 +54,7 @@ class ProfileLoader(object):
 			apply_profiles and not self._skip and
 			not os.path.isfile(os.path.join(config.confighome,
 											appbasename + ".lock")) and
-			not self._is_madvr_running(True)):
+			not self._is_other_running(True)):
 			self.apply_profiles_and_warn_on_error()
 		if sys.platform == "win32":
 			# We create a TSR tray program only under Windows.
@@ -80,7 +85,7 @@ class ProfileLoader(object):
 							return lang.getstr("calibration.load.handled_by_os")
 						if (os.path.isfile(os.path.join(config.confighome,
 													    appbasename + ".lock")) or
-							self.pl._is_madvr_running()):
+							self.pl._is_other_running()):
 							return "forbidden"
 						elif sys.platform == "win32":
 							self.pl._set_manual_restore(None)
@@ -117,7 +122,7 @@ class ProfileLoader(object):
 					
 					if (os.path.isfile(os.path.join(config.confighome,
 												   appbasename + ".lock")) or
-						self.pl._is_madvr_running()):
+						self.pl._is_other_running()):
 						restore_auto = restore_manual = reset = None
 					else:
 						##method = self.pl.apply_profiles_and_warn_on_error
@@ -668,10 +673,10 @@ class ProfileLoader(object):
 			else:
 				if displaycal_running != self._displaycal_running:
 					if displaycal_running:
-						msg = lang.getstr("app.disconnected.calibration_loading_enabled",
+						msg = lang.getstr("app.detection_lost.calibration_loading_enabled",
 										  appname)
 					else:
-						msg = lang.getstr("app.connected.calibration_loading_disabled",
+						msg = lang.getstr("app.detected.calibration_loading_disabled",
 										  appname)
 					displaycal_running = self._displaycal_running
 					safe_print(msg)
@@ -718,29 +723,33 @@ class ProfileLoader(object):
 	def _enumerate_windows_callback(self, hwnd, extra):
 		import win32gui
 		cls = win32gui.GetClassName(hwnd)
-		if cls == "madHcNetQueueWindow":
+		if cls == "madHcNetQueueWindow" or self._is_known_window_class(cls):
 			import pywintypes
-			import win32api
-			import win32con
 			import win32process
+			from util_win import get_process_filename
 			try:
 				thread_id, pid = win32process.GetWindowThreadProcessId(hwnd)
-				handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION |
-											  win32con.PROCESS_VM_READ, False,
-											  pid)
-				name = win32process.GetModuleFileNameEx(handle, 0)
-				win32api.CloseHandle(handle)
+				filename = get_process_filename(pid)
 			except pywintypes.error:
 				return
 			from config import exe
-			if (os.path.basename(name).lower() != "madhcctrl.exe" and
-				name.lower() != exe.lower()):
-				self.__madvr_isrunning = True
-				if os.path.basename(name).lower() == "madtpg.exe":
-					self.__madvr_component = "madTPG"
+			basename = os.path.basename(filename)
+			if (basename.lower() != "madhcctrl.exe" and
+				filename.lower() != exe.lower()):
+				self.__other_isrunning = True
+				self.__other_component = os.path.splitext(basename)[0]
 
-	def _is_madvr_running(self, fallback=False):
-		""" Determine id madVR is in use (e.g. video playback, madTPG) """
+	def _is_known_window_class(self, cls):
+		for partial in self._known_window_classes:
+			if partial in cls:
+				return True
+
+	def _is_other_running(self, fallback=True):
+		"""
+		Determine if other software that may be using the videoLUT is in use 
+		(e.g. madVR video playback, madTPG, other calibration software)
+		
+		"""
 		if sys.platform != "win32":
 			return
 		if len(self._madvr_instances):
@@ -750,24 +759,46 @@ class ProfileLoader(object):
 			# the callback API.
 			import pywintypes
 			import win32gui
+			import winerror
 			from log import safe_print
-			madvr_isrunning = self.__madvr_isrunning
-			self.__madvr_isrunning = False
-			self.__madvr_component = "madVR"
+			from util_win import get_process_filename, get_pids
+			other_isrunning = self.__other_isrunning
+			self.__other_isrunning = False
+			# Look for known window classes
 			try:
 				win32gui.EnumWindows(self._enumerate_windows_callback, None)
 			except pywintypes.error, exception:
 				safe_print(exception)
-			if madvr_isrunning != self.__madvr_isrunning:
-				import localization as lang
-				if madvr_isrunning:
-					lstr = "app.disconnected.calibration_loading_enabled"
+			if not self.__other_isrunning:
+				# Look for known processes
+				try:
+					pids = get_pids()
+				except Exception, exception:
+					safe_print(exception)
 				else:
-					lstr = "app.connected.calibration_loading_disabled"
-				msg = lang.getstr(lstr, self.__madvr_component)
+					for pid in pids:
+						try:
+							filename = get_process_filename(pid)
+						except pywintypes.error, exception:
+							if exception.args[0] != winerror.ERROR_ACCESS_DENIED:
+								safe_print(exception)
+							continue
+						basename = os.path.basename(filename)
+						if basename.lower() in (app.lower() for app in
+												self._known_apps):
+							self.__other_isrunning = True
+							self.__other_component = os.path.splitext(basename)[0]
+							break
+			if other_isrunning != self.__other_isrunning:
+				import localization as lang
+				if other_isrunning:
+					lstr = "app.detection_lost.calibration_loading_enabled"
+				else:
+					lstr = "app.detected.calibration_loading_disabled"
+				msg = lang.getstr(lstr, self.__other_component)
 				safe_print(msg)
-				self.notify([], [msg], not madvr_isrunning)
-			return self.__madvr_isrunning
+				self.notify([], [msg], not other_isrunning)
+			return self.__other_isrunning
 
 	def _madvr_connection_callback(self, param, connection, ip, pid, module,
 								   component, instance, is_new_instance):
@@ -780,14 +811,14 @@ class ProfileLoader(object):
 					apply_profiles = self._should_apply_profiles()
 					self._madvr_instances.append(args)
 					if apply_profiles:
-						msg = lang.getstr("app.connected.calibration_loading_disabled",
+						msg = lang.getstr("app.detected.calibration_loading_disabled",
 										  component)
 						safe_print(msg)
 						self.notify([], [msg], True)
 				elif args in self._madvr_instances:
 					self._madvr_instances.remove(args)
 					if self._should_apply_profiles():
-						msg = lang.getstr("app.disconnected.calibration_loading_enabled",
+						msg = lang.getstr("app.detection_lost.calibration_loading_enabled",
 										  component)
 						safe_print(msg)
 						self.notify([], [msg])
@@ -868,7 +899,7 @@ class ProfileLoader(object):
 				 (config.getcfg("profile.load_on_login") and
 				  not calibration_management_isenabled())) and
 				not self._displaycal_running and
-				not self._is_madvr_running(first_run))
+				not self._is_other_running(first_run))
 
 	def _toggle_fix_profile_associations(self, event):
 		from config import setcfg
