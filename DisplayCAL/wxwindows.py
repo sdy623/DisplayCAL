@@ -1971,9 +1971,9 @@ class BitmapBackgroundPanel(wx.PyPanel):
 		self._bitmap = bitmap
 
 	def OnPaint(self, event):
-		if sys.platform == "darwin":
+		if sys.platform != "win32":
 			# AutoBufferedPaintDCFactory is the magic needed for crisp text
-			# rendering in HiDPI mode under OS X
+			# rendering in HiDPI mode under OS X and Linux
 			cls = wx.AutoBufferedPaintDCFactory
 		else:
 			cls = wx.BufferedPaintDC
@@ -2506,9 +2506,9 @@ class FlatShadedButton(GradientButton):
 		:param `event`: a `wx.PaintEvent` event to be processed.
 		"""
 
-		if sys.platform == "darwin":
+		if sys.platform != "win32":
 			# AutoBufferedPaintDCFactory is the magic needed for crisp text
-			# rendering in HiDPI mode under OS X
+			# rendering in HiDPI mode under OS X and Linux
 			cls = wx.AutoBufferedPaintDCFactory
 		else:
 			cls = wx.BufferedPaintDC
@@ -2680,9 +2680,9 @@ class BorderGradientButton(GradientButton):
 		:param `event`: a `wx.PaintEvent` event to be processed.
 		"""
 
-		if sys.platform == "darwin":
+		if sys.platform != "win32":
 			# AutoBufferedPaintDCFactory is the magic needed for crisp text
-			# rendering in HiDPI mode under OS X
+			# rendering in HiDPI mode under OS X and Linux
 			cls = wx.AutoBufferedPaintDCFactory
 		else:
 			cls = wx.BufferedPaintDC
@@ -4215,9 +4215,9 @@ class BetterStaticFancyText(GenStaticBitmap):
 		return locals()
     
 	def OnPaint(self, event):
-		if sys.platform == "darwin":
+		if sys.platform != "win32":
 			# AutoBufferedPaintDCFactory is the magic needed for crisp text
-			# rendering in HiDPI mode under OS X
+			# rendering in HiDPI mode under OS X and Linux
 			cls = wx.AutoBufferedPaintDCFactory
 		else:
 			cls = wx.BufferedPaintDC

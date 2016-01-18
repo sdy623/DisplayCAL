@@ -13884,9 +13884,9 @@ class StartupFrame(wx.Frame):
 		pass
 
 	def OnPaint(self, event):
-		if sys.platform == "darwin":
+		if sys.platform != "win32":
 			# AutoBufferedPaintDCFactory is the magic needed for crisp text
-			# rendering in HiDPI mode under OS X
+			# rendering in HiDPI mode under OS X and Linux
 			cls = wx.AutoBufferedPaintDCFactory
 		else:
 			cls = wx.BufferedPaintDC
