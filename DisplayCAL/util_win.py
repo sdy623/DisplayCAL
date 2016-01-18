@@ -11,12 +11,20 @@ import win32con
 import win32process
 import winerror
 
-from ctypes import byref, sizeof
-from ctypes.wintypes import DWORD
+from ctypes import POINTER, byref, sizeof, windll
+from ctypes.wintypes import HANDLE, DWORD, LPWSTR
 
 if not hasattr(ctypes, "c_bool"):
 	# Python 2.5
 	ctypes.c_bool = ctypes.c_int
+
+if sys.getwindowsversion() >= (6, ):
+	LPDWORD = POINTER(DWORD)
+	PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+	kernel32 = windll.kernel32
+	QueryFullProcessImageNameW = kernel32.QueryFullProcessImageNameW
+	QueryFullProcessImageNameW.argtypes = [HANDLE, DWORD, LPWSTR, LPDWORD]
+	QueryFullProcessImageNameW.restype  = bool
 
 try:
 	psapi = ctypes.windll.psapi
@@ -189,11 +197,36 @@ def get_display_device(display_no=0):
 
 
 def get_process_filename(pid):
-	handle = win32api.OpenProcess(win32con.PROCESS_QUERY_INFORMATION |
-								  win32con.PROCESS_VM_READ, False,
-								  pid)
-	filename = win32process.GetModuleFileNameEx(handle, 0)
-	win32api.CloseHandle(handle)
+	if sys.getwindowsversion() >= (6, ):
+		flags = PROCESS_QUERY_LIMITED_INFORMATION
+	else:
+		flags = win32con.PROCESS_QUERY_INFORMATION |  win32con.PROCESS_VM_READ
+	handle = win32api.OpenProcess(flags, False, pid)
+	try:
+		if sys.getwindowsversion() >= (6, ):
+			dwSize = win32con.MAX_PATH
+			while True:
+				dwFlags = 0  # The name should use the Win32 path format
+				lpdwSize = DWORD(dwSize)
+				lpExeName = ctypes.create_unicode_buffer("", lpdwSize.value + 1)
+				success = QueryFullProcessImageNameW(int(handle), dwFlags,
+													 lpExeName, byref(lpdwSize))
+				if success and 0 < lpdwSize.value < dwSize:
+					break
+				error = kernel32.GetLastError()
+				if error != winerror.ERROR_INSUFFICIENT_BUFFER:
+					raise ctypes.WinError(error)
+				dwSize = dwSize + 256
+				if dwSize > 0x1000:
+					# This prevents an infinite loop under Windows Server 2008
+					# if the path contains spaces, see
+					# http://msdn.microsoft.com/en-us/library/ms684919(VS.85).aspx#4
+					raise ctypes.WinError(error)
+			filename = lpExeName.value
+		else:
+			filename = win32process.GetModuleFileNameEx(handle, 0)
+	finally:
+		win32api.CloseHandle(handle)
 	return filename
 
 
