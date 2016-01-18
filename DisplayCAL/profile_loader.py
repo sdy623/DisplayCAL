@@ -782,13 +782,13 @@ class ProfileLoader(object):
 				# ~ 6-9ms (1ms to get PIDs)
 				try:
 					pids = get_pids()
-				except Exception, exception:
+				except WindowsError, exception:
 					safe_print(exception)
 				else:
 					for pid in pids:
 						try:
 							filename = get_process_filename(pid)
-						except pywintypes.error, exception:
+						except (WindowsError, pywintypes.error), exception:
 							if exception.args[0] not in (winerror.ERROR_ACCESS_DENIED,
 														 winerror.ERROR_PARTIAL_COPY):
 								safe_print(exception)
