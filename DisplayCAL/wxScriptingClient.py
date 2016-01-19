@@ -50,7 +50,7 @@ class ScriptingClientFrame(SimpleTerminal):
 		self.commands = []
 		self.history = []
 		self.historyfilename = os.path.join(confighome,
-											appname +
+											config.appbasename +
 											"-scripting-client.history")
 		if os.path.isfile(self.historyfilename):
 			try:
