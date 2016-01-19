@@ -330,7 +330,7 @@ class ProfileLoader(object):
 					# Only need to run dispwin if under Windows, or if nothing else
 					# has already taken care of display profile and vcgt loading
 					# (e.g. oyranos-monitor with xcalib, or colord)
-					if worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1), "-c", 
+					if worker.exec_cmd(dispwin, ["-v", "-d%i" % (i + 1),
 												 profile_arg], 
 									   capture_output=True, skip_scripts=True, 
 									   silent=False):
