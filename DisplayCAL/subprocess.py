@@ -2,7 +2,7 @@ import os
 import sys
 
 import subprocess26
-from subprocess26 import Popen as _Popen, STARTUPINFO, list2cmdline
+from subprocess26 import Popen as _Popen, list2cmdline
 
 
 class Popen(_Popen):

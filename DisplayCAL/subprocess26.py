@@ -426,6 +426,7 @@ if mswindows:
         wShowWindow = 0
     class pywintypes:
         error = IOError
+    __all__.append("STARTUPINFO")
 else:
     import select
     _has_poll = hasattr(select, 'poll')
