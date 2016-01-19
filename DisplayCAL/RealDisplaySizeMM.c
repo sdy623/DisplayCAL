@@ -986,7 +986,7 @@ RealDisplaySizeMM(PyObject *self, PyObject *args)
 	int ix;
 	size_mm size;
 	
-	if (!PyArg_ParseTuple(args, "i", &ix)) ix = 0;
+	if (!PyArg_ParseTuple(args, "i", &ix)) return NULL;
 
 	size = get_real_screen_size_mm(ix);
 
@@ -999,7 +999,7 @@ GetXRandROutputXID(PyObject *self, PyObject *args)
 	int ix;
 	int xid;
 	
-	if (!PyArg_ParseTuple(args, "i", &ix)) ix = 0;
+	if (!PyArg_ParseTuple(args, "i", &ix)) return NULL;
 
 	xid = get_xrandr_output_xid(ix);
 
@@ -1007,8 +1007,8 @@ GetXRandROutputXID(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef RealDisplaySizeMM_methods[] = {
-	{"RealDisplaySizeMM", RealDisplaySizeMM, METH_VARARGS, "RealDisplaySizeMM(int displayNum = 0)\nReturn the size (in mm) of a given display."},
-	{"GetXRandROutputXID", GetXRandROutputXID, METH_VARARGS, "GetXRandROutputXID(int displayNum = 0)\nReturn the XRandR output X11 ID of a given display."},
+	{"RealDisplaySizeMM", RealDisplaySizeMM, METH_VARARGS, "RealDisplaySizeMM(int displayNum)\nReturn the size (in mm) of a given display."},
+	{"GetXRandROutputXID", GetXRandROutputXID, METH_VARARGS, "GetXRandROutputXID(int displayNum)\nReturn the XRandR output X11 ID of a given display."},
 	{NULL, NULL, 0, NULL}  /* Sentinel - marks the end of this structure */
 };
 
