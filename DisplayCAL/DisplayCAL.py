@@ -222,24 +222,22 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 							silent=True)
 		chglog = None
 		if resp:
-			readme = resp.read()
+			readme = safe_unicode(resp.read(), "utf-8")
 			if argyll:
-				chglog = re.search('<h1>[^<]+</h1>\s*<ul>.+?</ul>', readme, re.S)
+				chglog = readme
 			else:
 				chglog = re.search('<div id="(?:changelog|history)">'
 								   '.+?<h2>.+?</h2>'
 								   '.+?<dl>.+?</dd>', readme, re.S)
-			if chglog:
-				chglog = chglog.group().decode("utf-8", "replace")
+				chglog = chglog.group()
 				chglog = re.sub('<div id="(?:changelog|history)">', "", chglog)
 				chglog = re.sub("<\/?d[l|d]>", "", chglog)
 				chglog = re.sub("<(?:h2|dt)>.+?</(?:h2|dt)>", "", chglog)
 				chglog = re.sub("<h3>.+?</h3>", "", chglog)
-				chglog = re.sub("<h\d>(.+?)</h\d>", 
-								"<p><strong>\\1</strong></p>", chglog)
-				chglog = re.sub('<sup><a .+?>.+?</a></sup>', "", chglog)
-				chglog = re.sub('<a (?:.+? )?href="#[^"]+">(.+?)</a>', "\\1",
-								chglog)
+			chglog = re.sub(r"<h\d>(.+?)</h\d>", 
+							r"<p><strong>\1</strong></p>", chglog, flags=re.I)
+			chglog = re.sub('<a\s+(?:.+?\s+)?href="#[^"]+"(?:\s+.*?)?>(.+?)</a>',
+							r"\1", chglog, flags=re.I)
 		if not wx.GetApp():
 			return
 		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog,
