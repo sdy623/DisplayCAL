@@ -1,25 +1,8 @@
-# WRAPPER FOR PYTHON 2.5
-# This module exists only to make sure that other module's imports of subprocess
-# end up with a version that supports the terminate() method (introduced in
-# Python 2.6)
-
 import os
 import sys
 
-from subprocess26 import *
-from subprocess26 import list2cmdline
-
-if sys.platform == "win32":
-	from subprocess26 import (CREATE_NEW_CONSOLE, DUPLICATE_SAME_ACCESS, 
-							  INFINITE,  STARTF_USESHOWWINDOW, 
-							  STARTF_USESTDHANDLES, STARTUPINFO, 
-							  STD_ERROR_HANDLE, STD_INPUT_HANDLE, 
-							  STD_OUTPUT_HANDLE, SW_HIDE, WAIT_OBJECT_0)
-
-
-_Popen = Popen
-_call = call
-_check_call = check_call
+import subprocess26
+from subprocess26 import Popen as _Popen, STARTUPINFO, list2cmdline
 
 
 class Popen(_Popen):
@@ -40,22 +23,7 @@ class Popen(_Popen):
 					exception.filename = cmd
 			raise
 
-
-def call(*popenargs, **kwargs):
-    return Popen(*popenargs, **kwargs).wait()
+subprocess26.Popen = Popen
 
 
-call.__doc__ = _call.__doc__
-
-
-def check_call(*popenargs, **kwargs):
-    retcode = call(*popenargs, **kwargs)
-    cmd = kwargs.get("args")
-    if cmd is None:
-        cmd = popenargs[0]
-    if retcode:
-        raise CalledProcessError(retcode, cmd)
-    return retcode
-
-
-check_call.__doc__ = _check_call.__doc__
+from subprocess26 import *
