@@ -965,9 +965,10 @@ static size_mm get_real_screen_size_mm(int ix) {
 
 static int get_xrandr_output_xid(int ix) {
 	int xid = 0;
-	disppath *disp = NULL;
 #if defined(UNIX) && !defined(__APPLE__)
 #if RANDR_MAJOR == 1 && RANDR_MINOR >= 2
+	disppath *disp = NULL;
+
 	disp = get_a_display(ix);
 
 	if (disp == NULL) return 0;
