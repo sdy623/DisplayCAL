@@ -22,8 +22,11 @@ import os
 import sys
 
 import RealDisplaySizeMM as RDSMM
+from encodings import get_encodings
 from options import debug
 from util_x import get_display
+
+enc, fs_enc = get_encodings()
 
 XA_CARDINAL = 6
 XA_INTEGER = 19
