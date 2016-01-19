@@ -447,6 +447,10 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 				# Linux
 				path += "-linux"
 		launch_file("http://" + domain + path)
+	elif not argyll:
+		# Check for Argyll update
+		parent.app_update_check_handler(None, silent, True)
+		return
 	if silent:
 		# Check if we need to run instrument setup
 		parent.check_instrument_setup(check_donation, (parent, snapshot))
@@ -13562,11 +13566,12 @@ class MainFrame(ReportFrame, BaseFrame):
 	def bug_report_handler(self, event):
 		launch_file("http://%s/#reportbug" % domain)
 	
-	def app_update_check_handler(self, event, silent=False):
+	def app_update_check_handler(self, event, silent=False, argyll=False):
 		if not hasattr(self, "app_update_check") or \
 		   not self.app_update_check.isAlive():
 			self.app_update_check = threading.Thread(target=app_update_check, 
-													 args=(self, silent))
+													 args=(self, silent,
+														   False, argyll))
 			self.app_update_check.start()
 	
 	def app_auto_update_check_handler(self, event):
