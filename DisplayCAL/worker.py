@@ -5145,11 +5145,12 @@ while 1:
 		Will either return '-L' (use current profile) or a filename
 		
 		"""
+		arg = "-L"
 		try:
-			return ICCP.get_display_profile(display_no, path_only=True)
+			return ICCP.get_display_profile(display_no, path_only=True) or arg
 		except Exception, exception:
 			safe_print(exception)
-		return "-L"
+		return arg
 	
 	def update_display_name_manufacturer(self, ti3, display_name=None,
 										 display_manufacturer=None, 
