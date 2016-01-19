@@ -341,12 +341,8 @@ def _exit(lockfilename, port):
 				appsocket = AppSocket()
 				if not appsocket:
 					break
-				try:
-					appsocket.connect("127.0.0.1", port)
-				except socket.error, exception:
+				if not appsocket.connect("127.0.0.1", port):
 					# Other instance probably died
-					safe_print("Connection to 127.0.0.1:%s failed:" % port,
-							   exception)
 					del ports[i]
 				appsocket.close()
 			if ports:
