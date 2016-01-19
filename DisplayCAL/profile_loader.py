@@ -89,11 +89,9 @@ class ProfileLoader(object):
 													    appbasename + ".lock")) or
 							self.pl._is_other_running()):
 							return "forbidden"
-						elif sys.platform == "win32":
-							self.pl._set_manual_restore(None)
 						else:
-							self.pl.apply_profiles(True)
-						return self.pl.errors or "ok"
+							self.pl._manual_restore = True
+						return "ok"
 					return "invalid"
 
 			self.frame = PLFrame(self)
@@ -252,7 +250,7 @@ class ProfileLoader(object):
 
 		worker = self.worker
 
-		errors = self.errors = []
+		errors = []
 
 		if sys.platform == "win32":
 			separator = "-"
