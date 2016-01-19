@@ -22,7 +22,7 @@ import os
 import sys
 
 import RealDisplaySizeMM as RDSMM
-from encodings import get_encodings
+from encoding import get_encodings
 from options import debug
 from util_x import get_display
 
