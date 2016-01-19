@@ -31,6 +31,7 @@
 # include <X11/extensions/Xinerama.h>
 # include <X11/extensions/Xrandr.h>
 # include <X11/extensions/dpms.h>
+# include <dlfcn.h>
 #endif /* UNIX */
 
 #if defined(_MSC_VER)
@@ -525,10 +526,24 @@ disppath **get_displays() {
 
 		/* Go through all the screens */
 		for (i = 0; i < dcount; i++) {
+			static void *xrr_found = NULL;	/* .so handle */
+			static XRRScreenResources *(*_XRRGetScreenResourcesCurrent)
+					                  (Display *dpy, Window window) = NULL;
 			XRRScreenResources *scrnres;
 			int jj;		/* Screen index */
 
-			if ((scrnres = XRRGetScreenResources(mydisplay, RootWindow(mydisplay,i))) == NULL) {
+			if (minv >= 3 && xrr_found == NULL) {
+				if ((xrr_found = dlopen("libXrandr.so", RTLD_LAZY)) != NULL)
+					_XRRGetScreenResourcesCurrent = dlsym(xrr_found, "XRRGetScreenResourcesCurrent");
+			}
+
+			if (minv >= 3 && _XRRGetScreenResourcesCurrent != NULL) { 
+				scrnres = _XRRGetScreenResourcesCurrent(mydisplay, RootWindow(mydisplay,i));
+
+			} else {
+				scrnres = XRRGetScreenResources(mydisplay, RootWindow(mydisplay,i));
+			}
+			if (scrnres == NULL) {
 				debugrr("XRRGetScreenResources failed\n");
 				XCloseDisplay(mydisplay);
 				free_disppaths(disps);
