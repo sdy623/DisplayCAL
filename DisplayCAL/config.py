@@ -904,7 +904,7 @@ defaults = {
 	"profile.type": "X",
 	"profile.update": 0,
 	"profile_loader.error.show_msg": 1,
-	"profile_loader.fix_profile_associations": 1,
+	"profile_loader.fix_profile_associations": 0,
 	"profile_loader.known_apps": ";".join(["basiccolor display.exe",
 										   "calman app.exe",
 										   "chromapure.exe",
