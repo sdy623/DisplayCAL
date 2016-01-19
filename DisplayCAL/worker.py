@@ -5024,15 +5024,20 @@ while 1:
 		""" Get org.freedesktop.ColorManager device key """
 		if config.is_virtual_display():
 			return None
-		edid = self.display_edid[max(0, min(len(self.displays) - 1, 
-											getcfg("display.number") - 1))]
+		display_no = max(0, min(len(self.displays) - 1, 
+								getcfg("display.number") - 1))
+		edid = self.display_edid[display_no]
 		if not edid and xrandr:
 			# XrandR fallback
 			if not (quirk and use_serial_32 and not truncate_edid_strings):
 				return
-			display_name = xrandr.get_display_name(display_no)
-			if display_name:
-				edid = {"monitor_name": display_name}
+			try:
+				display_name = xrandr.get_display_name(display_no)
+			except:
+				pass
+			else:
+				if display_name:
+					edid = {"monitor_name": display_name}
 		return colord.device_id_from_edid(edid, quirk=quirk,
 										  use_serial_32=use_serial_32,
 										  truncate_edid_strings=truncate_edid_strings)
