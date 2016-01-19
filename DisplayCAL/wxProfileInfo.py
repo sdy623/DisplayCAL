@@ -1443,6 +1443,11 @@ class ProfileInfoFrame(LUTFrame):
 			self.worker.abort_subprocess(True)
 			return
 		self.worker.wrapup(False)
+		writecfg(module="profile-info", options=("3d.format",
+												 "last_cal_or_icc_path",
+												 "last_icc_path",
+												 "position.profile_info",
+												 "size.profile_info"))
 		event.Skip()
 
 	def OnMotion(self, event):
@@ -1911,11 +1916,6 @@ def main():
 		app.TopWindow.init_menubar()
 	wx.CallLater(1, _main, app)
 	app.MainLoop()
-	writecfg(module="profile-info", options=("3d.format",
-											 "last_cal_or_icc_path",
-											 "last_icc_path",
-											 "position.profile_info",
-											 "size.profile_info"))
 
 def _main(app):
 	app.TopWindow.listen()

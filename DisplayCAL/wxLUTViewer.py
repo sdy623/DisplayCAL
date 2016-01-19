@@ -1667,7 +1667,8 @@ class LUTFrame(BaseFrame):
 		self.listening = False
 		if self.worker.tempdir and os.path.isdir(self.worker.tempdir):
 			self.worker.wrapup(False)
-		wx.GetApp().ExitMainLoop()
+		config.writecfg(module="curve-viewer", options=("display.number", ))
+		event.Skip()
 
 	def OnMotion(self, event):
 		if isinstance(event, wx.MouseEvent):
@@ -1878,7 +1879,6 @@ def main():
 		app.TopWindow.init_menubar()
 	wx.CallLater(1, _main, app)
 	app.MainLoop()
-	config.writecfg(module="curve-viewer", options=("display.number", ))
 
 def _main(app):
 	app.TopWindow.listen()
