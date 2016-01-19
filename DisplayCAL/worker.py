@@ -105,6 +105,12 @@ from wxwindows import ConfirmDialog, InfoDialog, ProgressDialog, SimpleTerminal
 from wxDisplayAdjustmentFrame import DisplayAdjustmentFrame
 from wxDisplayUniformityFrame import DisplayUniformityFrame
 from wxUntetheredFrame import UntetheredFrame
+xrandr = None
+if sys.platform not in ("darwin", "win32"):
+	try:
+		import xrandr
+	except ImportError:
+		pass
 import wx.lib.delayedresult as delayedresult
 
 INST_CAL_MSGS = ["Do a reflective white calibration",
@@ -5020,6 +5026,13 @@ while 1:
 			return None
 		edid = self.display_edid[max(0, min(len(self.displays) - 1, 
 											getcfg("display.number") - 1))]
+		if not edid and xrandr:
+			# XrandR fallback
+			if not (quirk and use_serial_32 and not truncate_edid_strings):
+				return
+			display_name = xrandr.get_display_name(display_no)
+			if display_name:
+				edid = {"monitor_name": display_name}
 		return colord.device_id_from_edid(edid, quirk=quirk,
 										  use_serial_32=use_serial_32,
 										  truncate_edid_strings=truncate_edid_strings)

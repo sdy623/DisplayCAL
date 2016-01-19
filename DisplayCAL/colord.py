@@ -87,8 +87,6 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 					device_id = device_id.groups()[0]
 					device_ids[edid["hash"]] = device_id
 					return device_id
-	else:
-		return	
 	parts = ["xrandr"]
 	edid_keys = ["manufacturer", "monitor_name", "serial_ascii"]
 	if use_serial_32:
@@ -108,9 +106,9 @@ def device_id_from_edid(edid, quirk=True, use_serial_32=True,
 			parts.append(str(value))
 	if len(parts) > 1:
 		device_id = "-".join(parts)
-	device_ids[edid["hash"]] = device_id
-	return device_id
-	# TODO: Should fall back to xrandr name
+		if "hash" in edid:
+			device_ids[edid["hash"]] = device_id
+		return device_id
 
 
 def find(what, search):

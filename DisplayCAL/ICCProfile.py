@@ -422,6 +422,13 @@ def _colord_get_display_profile(display_no=0, path_only=False):
 					  colord.device_id_from_edid(edid, quirk=False,
 												 use_serial_32=False,
 												 truncate_edid_strings=True)]
+	elif xrandr:
+		# XrandR fallback
+		display_name = xrandr.get_display_name(display_no)
+		if display_name:
+			edid = {"monitor_name": display_name}
+			device_ids = [colord.device_id_from_edid(edid)]
+	if edid:
 		for device_id in OrderedDict.fromkeys(device_ids).iterkeys():
 			if device_id:
 				try:

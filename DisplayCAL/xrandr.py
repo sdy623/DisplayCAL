@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from ctypes import POINTER, Structure, c_int, c_long, c_ubyte, c_ulong, cdll, pointer, util
+import subprocess as sp
 
 libx11pth = util.find_library("X11")
 if not libx11pth:
@@ -104,6 +105,11 @@ def get_atom(atom_name=None, atom_type=XA_CARDINAL, x_hostname="",
 	libx11.XCloseDisplay(x_display)
 	
 	return property
+
+
+def get_display_name(display_no=0):
+	output = sp.check_output(["xrandr"]).decode(enc).splitlines()
+	return [l.split()[0] for l in output if " connected " in l][display_no]
 
 
 def get_output_property(display_no=0, property_name=None, 
