@@ -4185,7 +4185,7 @@ class BetterStaticFancyText(GenStaticBitmap):
 
 	def Enable(self, enable=True):
 		self._enabled = enable
-		if sys.platform == "darwin":
+		if sys.platform != "win32":
 			return
 		if enable:
 			bmp = self._enabledbitmap
@@ -4225,7 +4225,7 @@ class BetterStaticFancyText(GenStaticBitmap):
 		dc.SetBackground(wx.Brush(self.BackgroundColour, wx.SOLID))
 		dc.SetBackgroundMode(wx.SOLID)
 		dc.Clear()
-		if sys.platform == "darwin":
+		if sys.platform != "win32":
 			fancytext.RenderToDC(self._label, dc, 0, 0)
 		elif self._bitmap:
 			dc.DrawBitmap(self._bitmap, 0, 0, True)
@@ -4288,7 +4288,7 @@ class BetterStaticFancyText(GenStaticBitmap):
 			self._label = re.sub(r"<[^>]*?>", "", self._label)
 			self._label = self._label.replace("<", "")._label.replace(">", "")
 			bmp = fancytext.RenderToBitmap(self._label, background)
-		if sys.platform != "darwin":
+		if sys.platform == "win32":
 			self._enabledbitmap = bmp
 			self.SetBitmap(bmp)
 		else:
