@@ -88,6 +88,7 @@ typedef struct {
 
 // END disppath
 
+void free_a_disppath(disppath *path);
 void free_disppaths(disppath **paths);
 
 /* ----------------------------------------------- */
@@ -815,6 +816,16 @@ disppath **get_displays() {
 
 // END get_displays
 
+void free_a_disppath(disppath *path) {
+	if (path != NULL) {
+		if (path->name != NULL)
+			free(path->name);
+		if (path->description != NULL)
+			free(path->description);
+		free(path);
+	}
+}
+
 /* Free a whole list of display paths */
 void free_disppaths(disppath **disps) {
 	if (disps != NULL) {
@@ -904,9 +915,13 @@ static size_mm get_real_screen_size_mm(int ix) {
 
 #ifdef NT
 	hdc = CreateDC(disp->name, NULL, NULL, NULL);
-	if (hdc == NULL) return size;
+	if (hdc == NULL) {
+		free_a_disppath(disp);
+		return size;
+	}
 	size.width_mm = GetDeviceCaps(hdc, HORZSIZE);
 	size.height_mm = GetDeviceCaps(hdc, VERTSIZE);
+	DeleteDC(hdc);
 #endif
 #ifdef __APPLE__
 	sz = CGDisplayScreenSize(disp->ddid);
@@ -915,7 +930,10 @@ static size_mm get_real_screen_size_mm(int ix) {
 #endif
 #if defined(UNIX) && !defined(__APPLE__)
 	/* Create the base display name (in case of Xinerama, XRandR) */
-	if ((bname = strdup(disp->name)) == NULL) return size;
+	if ((bname = strdup(disp->name)) == NULL) {
+		free_a_disppath(disp);
+		return size;
+	}
 	if ((pp = strrchr(bname, ':')) != NULL) {
 		if ((pp = strchr(pp, '.')) != NULL) {
 			sprintf(pp,".%d",disp->screen);
@@ -927,6 +945,7 @@ static size_mm get_real_screen_size_mm(int ix) {
 	if(!mydisplay) {
 		debugr2((errout,"Unable to open display '%s'\n",bname));
 		free(bname);
+		free_a_disppath(disp);
 		return size;
 	}
 	free(bname);
@@ -940,6 +959,7 @@ static size_mm get_real_screen_size_mm(int ix) {
 	XCloseDisplay(mydisplay);
 #endif
 
+	free_a_disppath(disp);
 	return size;
 }
 
@@ -953,6 +973,7 @@ static int get_xrandr_output_xid(int ix) {
 	if (disp == NULL) return 0;
 
 	xid = disp->output;
+	free_a_disppath(disp);
 #endif
 #endif
 
