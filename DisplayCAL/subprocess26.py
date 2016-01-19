@@ -426,7 +426,6 @@ if mswindows:
         wShowWindow = 0
     class pywintypes:
         error = IOError
-    __all__.append("STARTUPINFO")
 else:
     import select
     _has_poll = hasattr(select, 'poll')
@@ -455,7 +454,8 @@ if mswindows:
     __all__.extend(["CREATE_NEW_CONSOLE",
                     "STD_INPUT_HANDLE", "STD_OUTPUT_HANDLE",
                     "STD_ERROR_HANDLE", "SW_HIDE",
-                    "STARTF_USESTDHANDLES", "STARTF_USESHOWWINDOW"])
+                    "STARTF_USESTDHANDLES", "STARTF_USESHOWWINDOW",
+                    "STARTUPINFO"])
 try:
     MAXFD = os.sysconf("SC_OPEN_MAX")
 except:
