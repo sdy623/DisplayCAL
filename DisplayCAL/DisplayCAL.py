@@ -235,9 +235,10 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 				chglog = re.sub("<(?:h2|dt)>.+?</(?:h2|dt)>", "", chglog)
 				chglog = re.sub("<h3>.+?</h3>", "", chglog)
 			chglog = re.sub(r"<h\d>(.+?)</h\d>", 
-							r"<p><strong>\1</strong></p>", chglog, flags=re.I)
+							r"<p><strong>\1</strong></p>", chglog,
+							flags=re.I | re.S)
 			chglog = re.sub('<a\s+(?:.+?\s+)?href="#[^"]+"(?:\s+.*?)?>(.+?)</a>',
-							r"\1", chglog, flags=re.I)
+							r"\1", chglog, flags=re.I | re.S)
 		if not wx.GetApp():
 			return
 		wx.CallAfter(app_update_confirm, parent, newversion_tuple, chglog,
