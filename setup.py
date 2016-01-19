@@ -266,7 +266,7 @@ def setup():
 					props = " "
 				print item.upper()[0] + props.upper()[0] + " " * 5, pth
 				mod = True
-				if item.upper()[0] != "D":
+				if item.upper()[0] != "D" and os.path.exists(pth):
 					mtime = os.stat(pth).st_mtime
 					if mtime > lastmod_time:
 						lastmod_time = mtime
