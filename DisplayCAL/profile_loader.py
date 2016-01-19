@@ -775,7 +775,7 @@ class ProfileLoader(object):
 			try:
 				win32gui.EnumWindows(self._enumerate_windows_callback, None)
 			except pywintypes.error, exception:
-				safe_print(exception)
+				safe_print("Enumerating windows failed:", exception)
 			if not self.__other_isrunning:
 				# Look for known processes
 				# Performance on C2D 3.16 GHz (Win7 x64, ~ 90 processes):
@@ -783,7 +783,7 @@ class ProfileLoader(object):
 				try:
 					pids = get_pids()
 				except WindowsError, exception:
-					safe_print(exception)
+					safe_print("Enumerating processes failed:", exception)
 				else:
 					for pid in pids:
 						try:
@@ -791,7 +791,8 @@ class ProfileLoader(object):
 						except (WindowsError, pywintypes.error), exception:
 							if exception.args[0] not in (winerror.ERROR_ACCESS_DENIED,
 														 winerror.ERROR_PARTIAL_COPY):
-								safe_print(exception)
+								safe_print("Couldn't get filename of "
+										   "process %s:" % pid, exception)
 							continue
 						basename = os.path.basename(filename)
 						if basename.lower() in self._known_apps:
