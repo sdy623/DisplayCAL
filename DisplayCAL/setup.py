@@ -139,7 +139,7 @@ def add_lib_excludes(key, excludebits):
 		config["excludes"][key].extend([name + ".lib" + exclude,
 										"lib" + exclude])
 	for exclude in ("32", "64"):
-		for pycompat in ("25", "26", "27"):
+		for pycompat in ("26", "27"):
 			if (key == "win32" and
 				(pycompat == sys.version[0] + sys.version[2] or
 				 exclude == excludebits[0])):
@@ -680,7 +680,7 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 	if sdist:
 		# For source desributions we want all libraries
 		for tmpbits in ("32", "64"):
-			for pycompat in ("25", "26", "27"):
+			for pycompat in ("26", "27"):
 				packages.extend(["%s.lib%s" % (name, tmpbits),
 								 "%s.lib%s.python%s" % (name, tmpbits, pycompat)])
 	elif sys.platform == "darwin":
@@ -703,7 +703,6 @@ setup(ext_modules=[Extension("%s.lib%s.RealDisplaySizeMM", sources=%r,
 			"Intended Audience :: End Users/Desktop",
 			"License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
 			"Operating System :: OS Independent",
-			"Programming Language :: Python :: 2.5",
 			"Programming Language :: Python :: 2.6",
 			"Programming Language :: Python :: 2.7",
 			"Topic :: Multimedia :: Graphics",

@@ -38,7 +38,7 @@ name = "DisplayCAL"
 name_html = '<span class="appname">Display<span>CAL</span></span>'
 
 py_maxversion = (2, 7)
-py_minversion = (2, 5)
+py_minversion = (2, 6)
 
 version = VERSION_STRING
 version_lin = VERSION_STRING # Linux

@@ -48,7 +48,7 @@ for bits in "32" "64" ; do
 	mkdir -p "$build_root/lib/python/site-packages/DisplayCAL/lib$bits"
 	echo "copying DisplayCAL/lib$bits/*.py -> $build_root/lib/python/site-packages/DisplayCAL/lib$bits"
 	cp -f DisplayCAL/lib$bits/*.py "$build_root/lib/python/site-packages/DisplayCAL/lib$bits"
-	for pycompat in "25" "26" "27" ; do
+	for pycompat in "26" "27" ; do
 		mkdir -p "$build_root/lib/python/site-packages/DisplayCAL/lib$bits/python$pycompat"
 		echo "copying DisplayCAL/lib$bits/python$pycompat/*.py -> $build_root/lib/python/site-packages/DisplayCAL/lib$bits/python$pycompat"
 		cp -f DisplayCAL/lib$bits/python$pycompat/*.py "$build_root/lib/python/site-packages/DisplayCAL/lib$bits/python$pycompat"
@@ -95,7 +95,7 @@ function requireLibs() {
 	return 0
 }
 
-require '@python.org/python' 2.5 2.6 2.7
+require '@python.org/python' 2.6 2.7
 
 requireAtLeast '@wxpython.org/python-wxgtk:2.8'
 

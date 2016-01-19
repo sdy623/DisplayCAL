@@ -767,7 +767,7 @@ def setup():
 		for bits in (32, 64):
 			collect += [("%%INST%%/%s/lib%s" % (name, bits),
 						 glob.glob(os.path.join(name, "lib%s/*.py" % bits)))]
-			for pycompat in (25, 26, 27):
+			for pycompat in (26, 27):
 				collect += [("%%INST%%/%s/lib%s/python%s"
 							 % (name, bits, pycompat),
 							 glob.glob(os.path.join(name, "lib%s/python%s/*.py"
