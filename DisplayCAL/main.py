@@ -243,44 +243,6 @@ def main(module=None):
 				sp.call(['osascript', '-e', 
 						 'do shell script "%s" with administrator privileges' 
 						 % ";".join(script).encode(fs_enc)])
-		if sys.platform not in ("darwin", "win32"):
-			# Linux: Try and fix v0.2.1b calibration loader, because 
-			# calibrationloader.sh is no longer present in v0.2.2b+
-			desktopfile_name = appbasename + "-Calibration-Loader-Display-"
-			if autostart_home and os.path.exists(autostart_home):
-				try:
-					autostarts = os.listdir(autostart_home)
-				except Exception, exception:
-					safe_print(u"Warning - directory '%s' listing failed: "
-							   u"%s" % tuple(safe_unicode(s) for s in 
-											 (autostarts, exception)))
-				import ConfigParser
-				from util_io import StringIOu as StringIO
-				for filename in autostarts:
-					if filename.startswith(desktopfile_name):
-						try:
-							desktopfile_path = os.path.join(autostart_home, 
-															filename)
-							cfg = ConfigParser.SafeConfigParser()
-							cfg.optionxform = str
-							cfg.read([desktopfile_path])
-							exec_ = cfg.get("Desktop Entry", "Exec")
-							if exec_.find("calibrationloader.sh") > -1:
-								cfg.set(
-									"Desktop Entry", "Exec", 
-									re.sub('"[^"]*calibrationloader.sh"\s*', 
-										   '', exec_, 1))
-								cfgio = StringIO()
-								cfg.write(cfgio)
-								desktopfile = open(desktopfile_path, "w")
-								cfgio.seek(0)
-								desktopfile.write("".join(["=".join(line.split(" = ", 1)) 
-														   for line in cfgio]))
-								desktopfile.close()
-						except Exception, exception:
-							safe_print("Warning - could not process old "
-									   "calibration loader:", 
-									   safe_unicode(exception))
 		# Initialize & run
 		if module == "3DLUT-maker":
 			from wxLUT3DFrame import main
