@@ -32,7 +32,7 @@ class ProfileLoader(object):
 		self.monitors = []
 		self.devices2profiles = {}
 		self._skip = "--skip" in sys.argv[1:]
-		self._manual_restore = False
+		self._manual_restore = True
 		self._reset_gamma_ramps = config.getcfg("profile_loader.reset_gamma_ramps")
 		self._known_apps = set([known_app.lower() for known_app in
 								config.defaults["profile_loader.known_apps"].split(";") +
