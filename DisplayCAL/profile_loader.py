@@ -788,7 +788,9 @@ class ProfileLoader(object):
 							filename = get_process_filename(pid)
 						except (WindowsError, pywintypes.error), exception:
 							if exception.args[0] not in (winerror.ERROR_ACCESS_DENIED,
-														 winerror.ERROR_PARTIAL_COPY):
+														 winerror.ERROR_PARTIAL_COPY,
+														 winerror.ERROR_INVALID_PARAMETER,
+														 winerror.ERROR_GEN_FAILURE):
 								safe_print("Couldn't get filename of "
 										   "process %s:" % pid, exception)
 							continue
