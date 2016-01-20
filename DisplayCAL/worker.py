@@ -3276,8 +3276,11 @@ class Worker(object):
 									 (config.get_display_name() == "Resolve" or
 									  (config.get_display_name() == "Prisma" and
 									   not defaults["patterngenerator.prisma.argyll"])))
-		use_3dlut_override = (self.use_patterngenerator and
-							  config.get_display_name(None, True) == "Prisma" and
+		use_3dlut_override = (((self.use_patterngenerator and
+								config.get_display_name(None, True) == "Prisma") or
+							   (config.get_display_name(None, True) == "madVR" and
+							    (sys.platform != "win32" or
+							     not getcfg("madtpg.native")))) and
 							  cmdname == get_argyll_utilname("dispread") and
 							  "-V" in args)
 		if use_3dlut_override:
@@ -3475,10 +3478,13 @@ BEGIN_DATA
 						# we are now done
 						self.madtpg.disconnect()
 						return True
-					if not "-V" in args:
-						if not self.madtpg.disable_3dlut():
-							self.madtpg.disconnect()
-							return Error("madVR_Disable3dlut failed")
+					if not "-V" in args and not use_3dlut_override:
+						endis = "disable"
+					else:
+						endis = "enable"
+					if not getattr(self.madtpg, endis + "_3dlut")():
+						self.madtpg.disconnect()
+						return Error("madVR_%s3dlut failed" % endis.capitalize())
 					if ((not (cmdname == get_argyll_utilname("dispwin") or
 							  self.dispread_after_dispcal) or
 						 (cmdname == get_argyll_utilname("dispcal") and
