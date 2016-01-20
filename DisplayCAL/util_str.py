@@ -292,9 +292,15 @@ def safe_basestring(obj):
 		error = []
 		if getattr(obj, "errno", None) is not None:
 			error.append("[Errno %s]" % obj.errno)
+		elif getattr(obj, "winerror", None) is not None:
+			# pywintypes.error
+			error.append("[Windows Errno %s]" % obj.winerror)
 		if getattr(obj, "strerror", None) is not None:
 			if getattr(obj, "filename", None) is not None:
 				error.append(obj.strerror + ":")
+			elif getattr(obj, "funcname", None) is not None:
+				# pywintypes.error
+				error.append(obj.funcname + ": " + obj.strerror)
 			else:
 				error.append(obj.strerror)
 		if not error:
