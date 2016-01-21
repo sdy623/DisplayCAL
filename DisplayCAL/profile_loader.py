@@ -129,7 +129,8 @@ class ProfileLoader(object):
 						reset = self.pl._set_reset_gamma_ramps
 
 					fix = len(self.pl.monitors) > 1
-					for i, (display, moninfo) in enumerate(self.pl.monitors):
+					for i, (display, edid,
+							moninfo) in enumerate(self.pl.monitors):
 						displays = get_display_devices(moninfo["Device"])
 						if len(displays) > 1:
 							fix = self.pl._toggle_fix_profile_associations
@@ -530,7 +531,7 @@ class ProfileLoader(object):
 				_winreg.CloseKey(key)
 			# Check profile associations
 			if apply_profiles or first_run:
-				for i, (display, moninfo) in enumerate(self.monitors):
+				for i, (display, edid, moninfo) in enumerate(self.monitors):
 					try:
 						profile = ICCP.get_display_profile(i, path_only=True)
 					except IndexError:
@@ -549,7 +550,9 @@ class ProfileLoader(object):
 								continue
 							safe_print(lang.getstr("display_detected"))
 							safe_print(display, "->", profile)
-							self.devices2profiles[device.DeviceKey] = (device.DeviceString,
+							display_edid = get_display_name_edid(device,
+																 moninfo)
+							self.devices2profiles[device.DeviceKey] = (display_edid,
 																	   profile)
 						self.profile_associations[i] = (profile, mtime)
 						self.profiles[profile] = None
@@ -684,32 +687,14 @@ class ProfileLoader(object):
 		safe_print("Display configuration monitoring thread finished")
 
 	def _enumerate_monitors(self):
-		import localization as lang
-		from util_str import safe_unicode
 		from util_win import (get_active_display_device,
 							  get_real_display_devices_info)
-		from edid import get_edid
 		self.monitors = []
 		for i, moninfo in enumerate(get_real_display_devices_info()):
 			# Get monitor descriptive string
 			device = get_active_display_device(moninfo["Device"])
-			if device:
-				display = safe_unicode(device.DeviceString)
-			else:
-				display = lang.getstr("unknown")
-			try:
-				edid = get_edid(i)
-			except:
-				edid = {}
-			display = edid.get("monitor_name", display)
-			m_left, m_top, m_right, m_bottom = moninfo["Monitor"]
-			m_width = m_right - m_left
-			m_height = m_bottom - m_top
-			display = " @ ".join([display, 
-								  "%i, %i, %ix%i" %
-								  (m_left, m_top, m_width,
-								   m_height)])
-			self.monitors.append((display, moninfo))
+			display, edid = get_display_name_edid(device, moninfo)
+			self.monitors.append((display, edid, moninfo))
 
 	def _enumerate_windows_callback(self, hwnd, extra):
 		import win32gui
@@ -826,7 +811,8 @@ class ProfileLoader(object):
 	def _reset_display_profile_associations(self):
 		import ICCProfile as ICCP
 		from log import safe_print
-		for devicekey, (devicestring, profile) in self.devices2profiles.iteritems():
+		for devicekey, (display_edid,
+						profile) in self.devices2profiles.iteritems():
 			if profile:
 				try:
 					current_profile = ICCP.get_display_profile(path_only=True,
@@ -836,18 +822,19 @@ class ProfileLoader(object):
 					continue
 				if current_profile and current_profile != profile:
 					safe_print("Resetting profile association for %s:" %
-							   devicestring, current_profile, "->", profile)
+							   display_edid[0], current_profile, "->", profile)
 					ICCP.set_display_profile(os.path.basename(profile),
 											 devicekey=devicekey)
 
-	def _set_display_profiles(self):
+	def _set_display_profiles(self, dry_run=False):
 		import win32api
 
 		import ICCProfile as ICCP
 		from log import safe_print
 		from util_win import get_active_display_device, get_display_devices
 		self.devices2profiles = {}
-		for i, (display, moninfo) in enumerate(self.monitors):
+		for i, (display, edid, moninfo) in enumerate(self.monitors):
+			active_device = get_active_display_device(moninfo["Device"])
 			for device in get_display_devices(moninfo["Device"]):
 				try:
 					profile = ICCP.get_display_profile(path_only=True,
@@ -855,10 +842,15 @@ class ProfileLoader(object):
 				except Exception, exception:
 					safe_print(exception)
 					profile = None
-				self.devices2profiles[device.DeviceKey] = (device.DeviceString,
+				if device.DeviceID == active_device.DeviceID:
+					active_moninfo = moninfo
+				else:
+					active_moninfo = None
+				display_edid = get_display_name_edid(device, active_moninfo)
+				self.devices2profiles[device.DeviceKey] = (display_edid,
 														   profile)
 			# Set the active profile
-			device = get_active_display_device(moninfo["Device"])
+			device = active_device
 			if not device:
 				continue
 			try:
@@ -869,7 +861,8 @@ class ProfileLoader(object):
 				continue
 			device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
 			current_profile = self.devices2profiles[device.DeviceKey][1]
-			if correct_profile and current_profile != correct_profile:
+			if (correct_profile and current_profile != correct_profile and
+				not dry_run):
 				safe_print("Fixing profile association for %s:" % display,
 						   current_profile, "->", correct_profile)
 				ICCP.set_display_profile(os.path.basename(correct_profile),
@@ -902,7 +895,69 @@ class ProfileLoader(object):
 				not self._is_other_running(enumerate_windows_and_processes))
 
 	def _toggle_fix_profile_associations(self, event):
-		from config import setcfg
+		from config import (get_default_dpi, get_icon_bundle, getcfg, geticon,
+							setcfg)
+		if event.IsChecked():
+			import ICCProfile as ICCP
+			import localization as lang
+			from colord import device_id_from_edid
+			from wxwindows import ConfirmDialog, wx
+			self._set_display_profiles(dry_run=True)
+			dlg = ConfirmDialog(None,
+								msg=lang.getstr("profile_loader.fix_profile_associations_warning"), 
+								title=self.get_title(),
+								ok=lang.getstr("profile_loader.fix_profile_associations"), 
+								bitmap=geticon(32, "dialog-warning"), wrap=128)
+			dlg.SetIcons(get_icon_bundle([256, 48, 32, 16],
+						 appname + "-apply-profiles"))
+			numdisp = len(self.devices2profiles)
+			scale = getcfg("app.dpi") / get_default_dpi()
+			if scale < 1:
+				scale = 1
+			list_panel = wx.Panel(dlg, -1)
+			list_panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+			list_panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+			list_ctrl = wx.ListCtrl(list_panel, -1,
+									size=(640 * scale,
+										  (20 * numdisp + 24) * scale),
+									style=wx.LC_REPORT | wx.LC_SINGLE_SEL |
+										  wx.BORDER_THEME,
+									name="displays2profiles")
+			list_panel.Sizer.Add(list_ctrl, 1, flag=wx.ALL, border=1)
+			list_ctrl.InsertColumn(0, lang.getstr("display"))
+			list_ctrl.InsertColumn(1, lang.getstr("profile"))
+			list_ctrl.SetColumnWidth(0, int(200 * scale))
+			list_ctrl.SetColumnWidth(1, int(420 * scale))
+			for i, (display_edid,
+					profile) in enumerate(self.devices2profiles.itervalues()):
+				index = list_ctrl.InsertStringItem(i, "")
+				list_ctrl.SetStringItem(index, 0, display_edid[0])
+				list_ctrl.SetStringItem(index, 1, profile)
+				try:
+					profile = ICCP.ICCProfile(profile)
+				except (IOError, ICCP.ICCProfileInvalidError), exception:
+					pass
+				else:
+					if isinstance(profile.tags.get("meta"), ICCP.DictType):
+						# Check if profile mapping makes sense
+						id = device_id_from_edid(display_edid[1])
+						if profile.tags.meta.getvalue("MAPPING_device_id") != id:
+							list_ctrl.SetItemTextColour(index, "#FF8000")
+			# Ignore item focus/selection
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_FOCUSED,
+						   lambda e: list_ctrl.SetItemState(e.GetIndex(), 0,
+															wx.LIST_STATE_FOCUSED))
+			list_ctrl.Bind(wx.EVT_LIST_ITEM_SELECTED,
+						   lambda e: list_ctrl.SetItemState(e.GetIndex(), 0,
+															wx.LIST_STATE_SELECTED))
+			dlg.sizer3.Insert(0, list_panel, 1, flag=wx.BOTTOM | wx.ALIGN_LEFT,
+							  border=12)
+			dlg.sizer0.SetSizeHints(dlg)
+			dlg.sizer0.Layout()
+			result = dlg.ShowModal()
+			dlg.Destroy()
+			if result != wx.ID_OK:
+				return
 		setcfg("profile_loader.fix_profile_associations",
 			   int(event.IsChecked()))
 		if event.IsChecked():
@@ -910,6 +965,31 @@ class ProfileLoader(object):
 		else:
 			self._reset_display_profile_associations()
 
+
+def get_display_name_edid(device, moninfo=None):
+	import localization as lang
+	from edid import get_edid
+	from util_str import safe_unicode
+	if device:
+		display = safe_unicode(device.DeviceString)
+	else:
+		display = lang.getstr("unknown")
+	try:
+		edid = get_edid(device=device)
+	except Exception, exception:
+		edid = {}
+	display = edid.get("monitor_name", display)
+	if moninfo:
+		m_left, m_top, m_right, m_bottom = moninfo["Monitor"]
+		m_width = m_right - m_left
+		m_height = m_bottom - m_top
+		display = " @ ".join([display, 
+							  "%i, %i, %ix%i" %
+							  (m_left, m_top, m_width,
+							   m_height)])
+	else:
+		display = "%s (%s)" % (display, lang.getstr("deactivated"))
+	return display, edid
 
 def main():
 	unknown_option = None

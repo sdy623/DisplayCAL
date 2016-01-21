@@ -79,7 +79,7 @@ def combine_hi_8lo(hi, lo):
 	return hi << 8 | lo
 
 
-def get_edid(display_no=0, display_name=None):
+def get_edid(display_no=0, display_name=None, device=None):
 	""" Get and parse EDID. Return dict. 
 	
 	On Mac OS X, you need to specify a display name.
@@ -88,11 +88,12 @@ def get_edid(display_no=0, display_name=None):
 	"""
 	edid = None
 	if sys.platform == "win32":
-		# The ordering will work as long as Argyll continues using
-		# EnumDisplayMonitors
-		monitors = util_win.get_real_display_devices_info()
-		moninfo = monitors[display_no]
-		device = util_win.get_active_display_device(moninfo["Device"])
+		if not device:
+			# The ordering will work as long as Argyll continues using
+			# EnumDisplayMonitors
+			monitors = util_win.get_real_display_devices_info()
+			moninfo = monitors[display_no]
+			device = util_win.get_active_display_device(moninfo["Device"])
 		if not device:
 			return {}
 		id = device.DeviceID.split("\\")[1]
