@@ -19,13 +19,11 @@ class ProfileLoader(object):
 	def __init__(self):
 		import config
 		from config import appbasename
-		from worker import Worker
 		from wxwindows import BaseApp, wx
 		if not wx.GetApp():
 			app = BaseApp(0)
 		else:
 			app = None
-		self.worker = Worker()
 		self.reload_count = 0
 		self.lock = threading.Lock()
 		self.monitoring = True
@@ -126,7 +124,6 @@ class ProfileLoader(object):
 						self.pl._is_other_running()):
 						restore_auto = restore_manual = reset = None
 					else:
-						##method = self.pl.apply_profiles_and_warn_on_error
 						restore_manual = self.pl._set_manual_restore
 						restore_auto = self.set_auto_restore
 						reset = self.pl._set_reset_gamma_ramps
@@ -257,7 +254,7 @@ class ProfileLoader(object):
 		if sys.platform == "win32":
 			self.lock.acquire()
 
-		worker = self.worker
+		worker = Worker()
 
 		errors = []
 
@@ -493,8 +490,6 @@ class ProfileLoader(object):
 			results = []
 			errors = []
 			apply_profiles = self._should_apply_profiles()
-			##if not apply_profiles:
-				##self.profile_associations = {}
 			# Check if display configuration changed
 			try:
 				key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, 
@@ -517,12 +512,7 @@ class ProfileLoader(object):
 							# One second delay to allow display configuration
 							# to settle
 							time.sleep(1)
-							##self.apply_profiles(True)
-							##apply_profiles = False
 						if not first_run or not self.monitors:
-							##self.worker.enumerate_displays_and_ports(silent=True, check_lut_access=False,
-																	 ##enumerate_ports=False,
-																	 ##include_network_devices=False)
 							self._enumerate_monitors()
 							if getcfg("profile_loader.fix_profile_associations"):
 								# Work-around long-standing bug in applications
@@ -540,7 +530,6 @@ class ProfileLoader(object):
 				_winreg.CloseKey(key)
 			# Check profile associations
 			if apply_profiles or first_run:
-				##self.lock.acquire()
 				for i, (display, moninfo) in enumerate(self.monitors):
 					try:
 						profile = ICCP.get_display_profile(i, path_only=True)
@@ -560,10 +549,6 @@ class ProfileLoader(object):
 								continue
 							safe_print(lang.getstr("display_detected"))
 							safe_print(display, "->", profile)
-							##self.lock.release()
-							##self.apply_profiles(True, index=i)
-							##self.lock.acquire()
-							##apply_profiles = False
 							self.devices2profiles[device.DeviceKey] = (device.DeviceString,
 																	   profile)
 						self.profile_associations[i] = (profile, mtime)
@@ -665,10 +650,6 @@ class ProfileLoader(object):
 					else:
 						safe_print(lang.getstr("success"))
 						results.append(display)
-					##self.lock.release()
-					##self.apply_profiles(True, index=i)
-					##self.lock.acquire()
-				##self.lock.release()
 			self._manual_restore = False
 			first_run = False
 			timestamp = time.time()
