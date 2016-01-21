@@ -67,7 +67,8 @@ class ProfileLoader(object):
 			import madvr
 			from log import safe_print
 			from util_str import safe_unicode
-			from util_win import calibration_management_isenabled
+			from util_win import (calibration_management_isenabled,
+								  get_display_devices)
 			from wxwindows import BaseFrame
 
 			class PLFrame(BaseFrame):
@@ -129,6 +130,14 @@ class ProfileLoader(object):
 						restore_manual = self.pl._set_manual_restore
 						restore_auto = self.set_auto_restore
 						reset = self.pl._set_reset_gamma_ramps
+
+					fix = len(self.pl.monitors) > 1
+					for i, (display, moninfo) in enumerate(self.pl.monitors):
+						displays = get_display_devices(moninfo["Device"])
+						if len(displays) > 1:
+							fix = self.pl._toggle_fix_profile_associations
+							break
+
 					for (label, method, kind, option,
 						 oxform) in (("calibration.reload_from_display_profiles",
 									  restore_manual, wx.ITEM_RADIO,
@@ -142,7 +151,7 @@ class ProfileLoader(object):
 									  restore_auto, wx.ITEM_CHECK,
 									  "profile.load_on_login", None),
 									 ("profile_loader.fix_profile_associations",
-									  self.pl._toggle_fix_profile_associations,
+									  fix,
 									  wx.ITEM_CHECK,
 									  "profile_loader.fix_profile_associations",
 									  None),
