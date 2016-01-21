@@ -1061,7 +1061,18 @@ class MadTPG_Net(object):
 			if self.debug:
 				safe_print("MadTPG_Net: Sending command %i %r to %s:%s" %
 						   ((commandno, command) + conn.getpeername()[:2]))
-			conn.sendall(packet)
+			while packet:
+				try:
+					bytes_sent = conn.send(packet)
+				except socket.error, exception:
+					if exception.errno == errno.EAGAIN:
+						# Mac OS X: Resource temporarily unavailable
+						sleep(0.001)
+						if bytes_sent == -1:
+							continue
+				if bytes_sent == 0:
+					raise socket.error(errno.ENOLINK, "Link has been severed")
+				packet = packet[bytes_sent:]
 		except socket.error, exception:
 			safe_print("MadTPG_Net: Sending command %i %r failed" %
 					   (commandno, command), exception)
