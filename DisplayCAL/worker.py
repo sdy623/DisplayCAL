@@ -7037,7 +7037,7 @@ usage: spotread [-options] [logfile]
 			else:
 				# Using madVR net-protocol pure python implementation
 				self.madtpg = madvr.MadTPG_Net()
-				self.madtpg.debug = debug
+				self.madtpg.debug = verbose
 		return self.madtpg.connect(method2=madvr.CM_StartLocalInstance)
 	
 	def measure(self, apply_calibration=True):
