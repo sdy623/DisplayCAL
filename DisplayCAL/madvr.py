@@ -648,7 +648,7 @@ class MadTPG_Net(object):
 				safe_print("MadTPG_Net: Sending multicast from %s:%s to port %i" %
 						   (addr[0], addr[1], port))
 			sock.sendall(struct.pack("<i", 0))
-			sock.close()
+			self._shutdown(sock, (self.multicast_ip, port))
 		for port in self.broadcast_ports:
 			sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 			sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -660,7 +660,7 @@ class MadTPG_Net(object):
 				safe_print("MadTPG_Net: Sending broadcast from %s:%s to port %i" %
 						   (addr[0], addr[1], port))
 			sock.sendall(struct.pack("<i", 0))
-			sock.close()
+			self._shutdown(sock, (self.broadcast_ip, port))
 
 	def connect(self, method1=CM_ConnectToLanInstance, timeout1=4000,
 				method2=CM_ShowListDialog, timeout2=0,
@@ -673,12 +673,18 @@ class MadTPG_Net(object):
 			if method in (CM_ConnectToLanInstance, CM_ShowListDialog):
 				if not self._cast_sockets:
 					self.listen()
-					self.announce()
+					# Give a little time for the user to acknowledge any
+					# OS firewall prompts
+					sleep(3)
 				if method == CM_ShowListDialog:
 					# TODO: Implement
 					pass
 				else:
-					if self._wait_for_client(None, timeout):
+					# Re-use existing connection
+					if not self._wait_for_client(None, 0.001):
+						# Otherwise, announce ourselves
+						self.announce()
+					if self._wait_for_client(None, timeout - 0.001):
 						return True
 			elif method == CM_ShowIpAddrDialog:
 				# TODO: Implement
@@ -841,7 +847,7 @@ class MadTPG_Net(object):
 
 	def _expect(self, conn, commandno=-1, command=None, params=(), component="",
 				timeout=3):
-		""" Wait until expected reply or timeout. Return reply params or None. """
+		""" Wait until expected reply or timeout. Return reply params or False. """
 		if not isinstance(params, (list, tuple)):
 			params = (params, )
 		addr = conn.getpeername()
@@ -857,22 +863,29 @@ class MadTPG_Net(object):
 					return r_params
 			sleep(0.001)
 			end = time()
+		if self.debug:
+			safe_print("MadTPG_Net: Timeout exceeded while waiting for reply")
 		return False
 
 	def _wait_for_client(self, addr=None, timeout=1):
-		""" Wait for (first) client connection and handshake """
+		""" Wait for (first) madTPG client connection and handshake """
 		start = end = time()
 		while end - start < timeout:
 			clients = self.clients.copy()
 			if clients:
-				addr = addr or clients.keys()[0]
-				client = clients.get(addr)
-				conn = self._client_sockets.get(addr)
-				if (client["component"] == "madTPG" and
-					client.get("confirmed") and conn and
-					self._send(conn, "StartTestPattern")):
-					self._client_socket = conn
-					return True
+				if addr:
+					c_addrs = [addr]
+				else:
+					c_addrs = clients.keys()
+				for c_addr in c_addrs:
+					client = clients.get(c_addr)
+					conn = self._client_sockets.get(c_addr)
+					if (client and
+						client["component"] == "madTPG" and
+						client.get("confirmed") and conn and
+						self._send(conn, "StartTestPattern")):
+						self._client_socket = conn
+						return True
 			sleep(0.001)
 			end = time()
 		return False
@@ -999,9 +1012,11 @@ class MadTPG_Net(object):
 						if isinstance(value, dict):
 							safe_print("  %s:" % key)
 							for subkey, subvalue in value.iteritems():
+								if self.debug < 2 and subkey != "exeFile":
+									continue
 								safe_print("    %s = %s" % (subkey.ljust(16),
 															trunc(subvalue, 56)))
-						else:
+						elif self.debug > 1:
 							safe_print("  %s = %s" % (key.ljust(16),
 													  trunc(value, 58)))
 		blob = blob[a:]
@@ -1028,7 +1043,7 @@ class MadTPG_Net(object):
 		packet = magic + struct.pack("<i", datalen)
 		packet += struct.pack("<I", crc32(packet) & 0xFFFFFFFF)
 		packet += data
-		if self.debug:
+		if self.debug > 1:
 			with _lock:
 				safe_print("MadTPG_Net: Assembled madVR packet:")
 				self._parse(packet)
