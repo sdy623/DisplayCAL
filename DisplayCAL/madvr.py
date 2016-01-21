@@ -1070,6 +1070,8 @@ class MadTPG_Net(object):
 						sleep(0.001)
 						if bytes_sent == -1:
 							continue
+					else:
+						raise
 				if bytes_sent == 0:
 					raise socket.error(errno.ENOLINK, "Link has been severed")
 				packet = packet[bytes_sent:]
