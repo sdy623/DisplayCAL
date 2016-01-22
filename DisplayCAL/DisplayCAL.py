@@ -1457,8 +1457,9 @@ class MainFrame(ReportFrame, BaseFrame):
 		})
 
 		self.recent_cals = getcfg("recent_cals").split(os.pathsep)
-		if not "" in self.recent_cals:
-			self.recent_cals = [""] + self.recent_cals
+		while "" in self.recent_cals:
+			self.recent_cals.remove("")
+		self.recent_cals.insert(0, "")
 		
 		self.presets = []
 		presets = get_data_path("presets", ".*\.(?:icc|icm)$")
@@ -2955,7 +2956,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("settings.changed", 1)
 			self.worker.options_dispcal = []
 			if getcfg("calibration.file", False):
-				setcfg("calibration.file", None)
+				setcfg("calibration.file", "")
 				# Load LUT curves from current display profile (if any, and if 
 				# it contains curves)
 				self.load_display_profile_cal(None)
@@ -3522,7 +3523,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.lut3d_create_btn.Enable(is_profile() and
 									 getcfg("calibration.file", False)
 									 not in self.presets)
-		if getcfg("calibration.file", False) in self.presets:
+		if getcfg("calibration.file", False) in self.presets[1:]:
 			self.measurement_report_btn.Disable()
 		
 		self.panel.Layout()
@@ -3567,7 +3568,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			profile_exists = os.path.exists(profile_path)
 		else:
 			filename = None
-			if cal in self.recent_cals:
+			if cal in self.recent_cals[1:]:
 				# The case-sensitive index could fail because of 
 				# case insensitive file systems, e.g. if the 
 				# stored filename string is 
@@ -3582,7 +3583,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.calibration_file_ctrl.SetStringSelection(
 				lang.getstr("settings.new"))
 			self.calibration_file_ctrl.SetToolTip(None)
-			setcfg("calibration.file", None)
+			setcfg("calibration.file", "")
 			setcfg("calibration.update", 0)
 			profile_path = None
 			profile_exists = False
@@ -4385,7 +4386,9 @@ class MainFrame(ReportFrame, BaseFrame):
 
 	def lut3d_set_path(self, path=None):
 		# 3D LUT filename with crcr32 hash before extension - up to DCG 2.9.0.7
-		profile_save_path = os.path.splitext(path or getcfg("calibration.file"))[0]
+		profile_save_path = os.path.splitext(path or
+											 getcfg("calibration.file") or
+											 defaults["calibration.file"])[0]
 		lut3d = [getcfg("3dlut.gamap.use_b2a") and "gg" or "G",
 				 "i" + getcfg("3dlut.rendering_intent"),
 				 "r%i" % getcfg("3dlut.size"),
@@ -10761,7 +10764,7 @@ class MainFrame(ReportFrame, BaseFrame):
 					   ok=lang.getstr("ok"), 
 					   bitmap=geticon(32, "dialog-information"))
 		cal_changed = v != getcfg("measurement_mode") and \
-					  getcfg("calibration.file", False) not in self.presets
+					  getcfg("calibration.file", False) not in self.presets[1:]
 		setcfg("measurement_mode", (strtr(v, {"V": "", 
 											  "H": ""}) if v else None) or None)
 		instrument_features = self.worker.get_instrument_features()
@@ -13430,7 +13433,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				idx = index_fallback_ignorecase(self.recent_cals, cal)
 				self.recent_cals.remove(cal)
 				self.calibration_file_ctrl.Delete(idx)
-				setcfg("calibration.file", None)
+				setcfg("calibration.file", "")
 				setcfg("settings.changed", 1)
 				recent_cals = []
 				for recent_cal in self.recent_cals:
