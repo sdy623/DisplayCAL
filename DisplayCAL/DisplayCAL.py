@@ -13498,7 +13498,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								   u"Argyll CMS %s © Graeme Gill" %
 								   self.worker.argyll_version_string))
 		items.append(HyperLinkCtrl(
-			self.aboutdialog, -1, label="ArgyllCMS.com", 
+			self.aboutdialog, -1, label="argyllcms.com", 
 			URL="http://www.argyllcms.com"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1, 
@@ -13531,7 +13531,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		items.append(wx.StaticText(self.aboutdialog, -1, "wxPython " + 
 														 wx.version()))
 		items.append(HyperLinkCtrl(
-			self.aboutdialog, -1, label="wxPython.org", 
+			self.aboutdialog, -1, label="wxpython.org", 
 			URL="http://www.wxpython.org"))
 		items.append(wx.StaticText(self.aboutdialog, -1, ""))
 		items.append(wx.StaticText(self.aboutdialog, -1,
