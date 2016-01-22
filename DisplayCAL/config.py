@@ -321,14 +321,10 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 									bitmaps[name].Size[1] != h):
 						# HighDPI support. Rescale
 						img = bitmaps[name].ConvertToImage()
-						if not hasattr(wx, "IMAGE_QUALITY_BICUBIC"):
+						if not hasattr(wx, "IMAGE_QUALITY_BILINEAR"):
 							quality = wx.IMAGE_QUALITY_NORMAL
-						elif oname == "rgbsquares":
-							# Hmm. Everything else looks great with bicubic,
-							# but this one gets jaggy unless we use bilinear
-							quality = wx.IMAGE_QUALITY_BILINEAR
 						else:
-							quality = wx.IMAGE_QUALITY_BICUBIC
+							quality = wx.IMAGE_QUALITY_BILINEAR
 						img.Rescale(w, h, quality=quality)
 						bitmaps[name] = img.ConvertToBitmap()
 			else:
