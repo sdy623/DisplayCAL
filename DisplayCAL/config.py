@@ -1459,6 +1459,8 @@ def initcfg(module=None):
 		# be set in the 'defaults' collection
 		setcfg("gamap_src_viewcond", "mt")
 		setcfg("gamap_out_viewcond", "mt")
+		# Set default preset
+		setcfg("calibration.file", defaults["calibration.file"])
 	# Read cfg
 	cfgnames = []
 	if module != "3DLUT-maker":
@@ -1496,8 +1498,6 @@ def initcfg(module=None):
 			for name, val in cfg.items(section):
 				if isinstance(val, list):
 					cfg.set(section, name, "\n".join(val))
-	if getcfg("calibration.file", False) is None:
-		setcfg("calibration.file", defaults["calibration.file"])
 
 
 dpiset = False

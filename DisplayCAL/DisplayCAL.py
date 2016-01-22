@@ -2956,7 +2956,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("settings.changed", 1)
 			self.worker.options_dispcal = []
 			if getcfg("calibration.file", False):
-				setcfg("calibration.file", "")
+				setcfg("calibration.file", None)
 				# Load LUT curves from current display profile (if any, and if 
 				# it contains curves)
 				self.load_display_profile_cal(None)
@@ -3583,7 +3583,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			self.calibration_file_ctrl.SetStringSelection(
 				lang.getstr("settings.new"))
 			self.calibration_file_ctrl.SetToolTip(None)
-			setcfg("calibration.file", "")
+			setcfg("calibration.file", None)
 			setcfg("calibration.update", 0)
 			profile_path = None
 			profile_exists = False
@@ -13433,7 +13433,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				idx = index_fallback_ignorecase(self.recent_cals, cal)
 				self.recent_cals.remove(cal)
 				self.calibration_file_ctrl.Delete(idx)
-				setcfg("calibration.file", "")
+				setcfg("calibration.file", None)
 				setcfg("settings.changed", 1)
 				recent_cals = []
 				for recent_cal in self.recent_cals:
