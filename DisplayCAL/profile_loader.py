@@ -472,7 +472,6 @@ class ProfileLoader(object):
 
 		import config
 		from config import appbasename, getcfg
-		from defaultpaths import iccprofiles
 		import ICCProfile as ICCP
 		from wxwindows import wx
 		import localization as lang
@@ -533,12 +532,14 @@ class ProfileLoader(object):
 			if apply_profiles or first_run:
 				for i, (display, edid, moninfo) in enumerate(self.monitors):
 					try:
-						profile = ICCP.get_display_profile(i, path_only=True)
+						profile_path = ICCP.get_display_profile(i, path_only=True)
 					except IndexError:
 						break
 					except:
 						continue
-					profile_path = os.path.join(iccprofiles[0], profile)
+					if not profile_path:
+						continue
+					profile = os.path.basename(profile_path)
 					if os.path.isfile(profile_path):
 						mtime = os.stat(profile_path).st_mtime
 					else:
@@ -820,11 +821,13 @@ class ProfileLoader(object):
 				except Exception, exception:
 					safe_print(exception)
 					continue
+				if not current_profile:
+					continue
+				current_profile = os.path.basename(current_profile)
 				if current_profile and current_profile != profile:
 					safe_print("Resetting profile association for %s:" %
 							   display_edid[0], current_profile, "->", profile)
-					ICCP.set_display_profile(os.path.basename(profile),
-											 devicekey=devicekey)
+					ICCP.set_display_profile(profile, devicekey=devicekey)
 
 	def _set_display_profiles(self, dry_run=False):
 		import win32api
@@ -842,6 +845,8 @@ class ProfileLoader(object):
 				except Exception, exception:
 					safe_print(exception)
 					profile = None
+				if profile:
+					profile = os.path.basename(profile)
 				if device.DeviceID == active_device.DeviceID:
 					active_moninfo = moninfo
 				else:
@@ -859,6 +864,8 @@ class ProfileLoader(object):
 			except Exception, exception:
 				safe_print(exception)
 				continue
+			if correct_profile:
+				correct_profile = os.path.basename(correct_profile)
 			device = win32api.EnumDisplayDevices(moninfo["Device"], 0)
 			current_profile = self.devices2profiles[device.DeviceKey][1]
 			if (correct_profile and current_profile != correct_profile and

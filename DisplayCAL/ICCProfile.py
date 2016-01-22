@@ -470,7 +470,7 @@ def _wcs_get_display_profile(devicekey,
 		raise util_win.get_windows_error(ctypes.windll.kernel32.GetLastError())
 	if buf.value:
 		if path_only:
-			return buf.value
+			return os.path.join(iccprofiles[0], buf.value)
 		return ICCProfile(buf.value)
 
 
@@ -533,7 +533,7 @@ def _winreg_get_display_profile(monkey, current_user=False, path_only=False):
 								"sRGB Color Space Profile.icm")
 	if filename:
 		if path_only:
-			return filename
+			return os.path.join(iccprofiles[0], filename)
 		return ICCProfile(filename)
 	return None
 
