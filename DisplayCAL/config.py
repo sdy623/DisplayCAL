@@ -269,8 +269,9 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 				parts[-1] = parts[-1].lower()
 			oname = parts[-1]
 			name2x = oname + "@2x"
+			name4x = oname + "@4x"
 			path = None
-			for i in xrange(4):
+			for i in xrange(5):
 				if scale > 1:
 					if len(size) == 2:
 						# Icon
@@ -278,10 +279,16 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 							# HighDPI support. Try scaled size
 							parts[-2] = "%ix%i" % (w, h)
 						elif i == 1:
+							if scale < 1.75 or scale == 2:
+								continue
+							# HighDPI support. Try @4x version
+							parts[-2] = "%ix%i" % (ow, oh)
+							parts[-1] = name4x
+						elif i == 2:
 							# HighDPI support. Try @2x version
 							parts[-2] = "%ix%i" % (ow, oh)
 							parts[-1] = name2x
-						elif i == 2:
+						elif i == 3:
 							# HighDPI support. Try original size times two
 							parts[-2] = "%ix%i" % (ow * 2, oh * 2)
 							parts[-1] = oname
@@ -290,9 +297,14 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 							parts[-2] = "%ix%i" % (ow, oh)
 					else:
 						# Theme graphic
-						if i in (0, 2):
+						if i in (0, 3):
 							continue
 						elif i == 1:
+							if scale < 1.75 or scale == 2:
+								continue
+							# HighDPI support. Try @4x version
+							parts[-1] = name4x
+						elif i == 2:
 							# HighDPI support. Try @2x version
 							parts[-1] = name2x
 						else:
@@ -310,9 +322,9 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 				bitmaps[name] = wx.Bitmap(path)
 				if scale > 1 and i:
 					rescale = False
-					if i == 1:
-						# HighDPI support. 2x version, determine scaled size
-						w, h = [int(round(v / 2 * scale)) for v in bitmaps[name].Size]
+					if i in (1, 2):
+						# HighDPI support. 4x/2x version, determine scaled size
+						w, h = [int(round(v / (2 * (3 - i)) * scale)) for v in bitmaps[name].Size]
 						rescale = True
 					elif len(size) == 2:
 						# HighDPI support. Icon
@@ -323,6 +335,12 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 						img = bitmaps[name].ConvertToImage()
 						if not hasattr(wx, "IMAGE_QUALITY_BILINEAR"):
 							quality = wx.IMAGE_QUALITY_NORMAL
+						elif oname == "rgbsquares":
+							# Hmm. Everything else looks great with bicubic,
+							# but this one gets jaggy unless we use bilinear
+							quality = wx.IMAGE_QUALITY_BILINEAR
+						elif scale < 1.5 or i == 1:
+							quality = wx.IMAGE_QUALITY_BICUBIC
 						else:
 							quality = wx.IMAGE_QUALITY_BILINEAR
 						img.Rescale(w, h, quality=quality)
