@@ -478,6 +478,8 @@ class LUT3DFrame(BaseFrame):
 						return
 					tempcal = os.path.join(tempdir, "temp.cal")
 					cancel = False
+					real_displays_count = 0
+					show_nonlinear_videolut_warning = False
 					for i, display_name in enumerate(self.worker.display_names):
 						if (display_name == profile_display_name and
 							display_name != "madVR" and
@@ -485,15 +487,20 @@ class LUT3DFrame(BaseFrame):
 							self.worker.save_current_video_lut(
 								i + 1, tempcal, silent=True) is True and
 							not cal_to_fake_profile(tempcal).tags.vcgt.is_linear()):
-							if copy_from_path:
-								confirm = lang.getstr("3dlut.save_as")
-							else:
-								confirm = lang.getstr("3dlut.install")
-							if not show_result_dialog(UnloggedWarning(
-								lang.getstr("3dlut.1dlut.videolut.nonlinear")),
-								self, confirm=confirm):
-								cancel = True
+							show_nonlinear_videolut_warning = True
 							break
+						if not config.is_virtual_display(i):
+							real_displays_count += 1
+					if (show_nonlinear_videolut_warning or
+						real_displays_count == 1):
+						if copy_from_path:
+							confirm = lang.getstr("3dlut.save_as")
+						else:
+							confirm = lang.getstr("3dlut.install")
+						if not show_result_dialog(UnloggedWarning(
+							lang.getstr("3dlut.1dlut.videolut.nonlinear")),
+							self, confirm=confirm):
+							cancel = True
 					if os.path.isfile(tempcal):
 						os.remove(tempcal)
 					if cancel:
