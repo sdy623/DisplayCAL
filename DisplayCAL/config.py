@@ -323,7 +323,7 @@ def getbitmap(name, display_missing_icon=True, scale=True):
 						img = bitmaps[name].ConvertToImage()
 						if not hasattr(wx, "IMAGE_QUALITY_BICUBIC"):
 							quality = wx.IMAGE_QUALITY_NORMAL
-						elif parts[-1] == "rgbsquares":
+						elif oname == "rgbsquares":
 							# Hmm. Everything else looks great with bicubic,
 							# but this one gets jaggy unless we use bilinear
 							quality = wx.IMAGE_QUALITY_BILINEAR
