@@ -246,6 +246,8 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 	elif not argyll and not snapshot and VERSION > VERSION_BASE:
 		app_update_check(parent, silent, True)
 	elif not argyll:
+		if silent:
+			safe_print(lang.getstr("update_check.uptodate", appname))
 		if check_argyll_bin():
 			app_update_check(parent, silent, argyll=True)
 		elif silent:
@@ -257,7 +259,7 @@ def app_update_check(parent=None, silent=False, snapshot=False, argyll=False):
 	elif not silent:
 		wx.CallAfter(app_uptodate, parent)
 	else:
-		safe_print(lang.getstr("update_check.uptodate", appname))
+		safe_print(lang.getstr("update_check.uptodate", "Argyll CMS"))
 		# Check if we need to run instrument setup
 		wx.CallAfter(parent.check_instrument_setup, check_donation,
 					 (parent, snapshot))
