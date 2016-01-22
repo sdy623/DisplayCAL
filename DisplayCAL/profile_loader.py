@@ -917,9 +917,10 @@ class ProfileLoader(object):
 			list_panel = wx.Panel(dlg, -1)
 			list_panel.BackgroundColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
 			list_panel.Sizer = wx.BoxSizer(wx.HORIZONTAL)
+			hscroll = wx.SystemSettings_GetMetric(wx.SYS_HSCROLL_Y)
 			list_ctrl = wx.ListCtrl(list_panel, -1,
 									size=(640 * scale,
-										  (20 * numdisp + 24) * scale),
+										  (20 * numdisp + 25 + hscroll) * scale),
 									style=wx.LC_REPORT | wx.LC_SINGLE_SEL |
 										  wx.BORDER_THEME,
 									name="displays2profiles")
