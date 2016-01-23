@@ -137,7 +137,7 @@ class ProfileLoader(object):
 							break
 
 					for (label, method, kind, option,
-						 oxform) in (("calibration.reload_from_display_profiles",
+						 oxform) in (("calibration.load_from_display_profiles",
 									  restore_manual, wx.ITEM_RADIO,
 									  "profile_loader.reset_gamma_ramps",
 									  lambda v: not v),
