@@ -162,6 +162,7 @@ except ImportError:
 from wx import xrc
 from wx.lib import delayedresult, platebtn
 from wx.lib.art import flagart
+from wx.lib.scrolledpanel import ScrolledPanel
 import wx.html
 
 
@@ -13356,15 +13357,30 @@ class MainFrame(ReportFrame, BaseFrame):
 				ok=lang.getstr("delete"), cancel=lang.getstr("cancel"), 
 				bitmap=geticon(32, "dialog-warning"))
 			if self.related_files:
-				dlg.sizer3.Add((0, 8))
-				for related_file in self.related_files:
-					dlg.sizer3.Add((0, 4))
-					chk = wx.CheckBox(dlg, -1, related_file)
+				scale = getcfg("app.dpi") / config.get_default_dpi()
+				if scale < 1:
+					scale = 1
+				scrolled = ScrolledPanel(dlg, -1, style=wx.VSCROLL)
+				sizer = scrolled.Sizer = wx.BoxSizer(wx.VERTICAL)
+				dlg.sizer3.Add(scrolled, flag=wx.TOP | wx.EXPAND, border=12)
+				for i, related_file in enumerate(self.related_files):
+					if i:
+						sizer.Add((0, 4))
+					chk = wx.CheckBox(scrolled, -1, related_file)
 					chk.SetValue(self.related_files[related_file])
 					dlg.Bind(wx.EVT_CHECKBOX, 
 							 self.delete_calibration_related_handler, 
 							 id=chk.GetId())
-					dlg.sizer3.Add(chk, flag=wx.ALIGN_LEFT, border=12)
+					sizer.Add(chk, flag=wx.ALIGN_LEFT)
+				scrolled.SetupScrolling()
+				scrolled.MinSize = (min(scrolled.GetVirtualSize()[0] + 4 * scale +
+										wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
+										self.GetDisplay().ClientArea[2] -
+										(12 * 3 + 32) * scale),
+									min((chk.Size[1] * min(len(self.related_files),
+														   20)) * scale,
+										max(self.GetDisplay().ClientArea[3] -
+											dlg.Size[1], chk.Size[1])))
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
 				dlg.Center()
