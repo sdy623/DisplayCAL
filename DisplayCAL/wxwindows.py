@@ -4168,16 +4168,14 @@ class BetterStaticFancyText(GenStaticBitmap):
 	def __init__(self, window, id, text, *args, **kargs):
 		args = list(args)
 		kargs.setdefault('name', 'staticFancyText')
+		# Ignore background, always use parent background
 		if 'background' in kargs:
-			background = kargs.pop('background')
+			kargs.pop('background')
 		elif args:
-			background = args.pop(0)
-		else:
-			background = window.GetBackgroundColour()
+			args.pop(0)
 		
 		bmp = wx.EmptyBitmap(1, 1)
 		GenStaticBitmap.__init__(self, window, id, bmp, *args, **kargs)
-		self.BackgroundColour = background
 		self.Label = text
 
 	def Disable(self):
@@ -4222,7 +4220,7 @@ class BetterStaticFancyText(GenStaticBitmap):
 		else:
 			cls = wx.BufferedPaintDC
 		dc = cls(self)
-		dc.SetBackground(wx.Brush(self.BackgroundColour, wx.SOLID))
+		dc.SetBackground(wx.Brush(self.Parent.BackgroundColour, wx.SOLID))
 		dc.SetBackgroundMode(wx.SOLID)
 		dc.Clear()
 		if sys.platform != "win32":
