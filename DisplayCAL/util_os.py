@@ -586,15 +586,16 @@ def which(executable, paths = None):
 
 
 def whereis(filename):
-	try:
-		p = sp.Popen(["whereis", filename], stdout=sp.PIPE)
-		stdout, stderr = p.communicate()
-	except:
-		return
-	else:
-		result = stdout.split(":", 1).pop().strip()
-		if result:
-			return result
+	for cmd in ("whereis", "locate"):
+		try:
+			p = sp.Popen([cmd, filename], stdout=sp.PIPE)
+			stdout, stderr = p.communicate()
+		except:
+			pass
+		else:
+			result = stdout.split(os.linesep).pop().split(":", 1).pop().strip()
+			if result:
+				return result
 
 
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
