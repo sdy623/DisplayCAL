@@ -586,16 +586,23 @@ def which(executable, paths = None):
 
 
 def whereis(filename):
-	for cmd in ("whereis", "locate"):
+	for args in (["whereis", filename], ["locate", filename],
+				 ["ldconfig", "-p"]):
 		try:
-			p = sp.Popen([cmd, filename], stdout=sp.PIPE)
+			p = sp.Popen(args, stdout=sp.PIPE)
 			stdout, stderr = p.communicate()
 		except:
 			pass
 		else:
-			result = stdout.strip().split(os.linesep).pop().split(":", 1).pop().strip()
-			if result:
-				return result
+			stdout_lines = stdout.strip().splitlines()
+			if args[0] == "ldconfig":
+				for line in stdout_lines:
+					if filename in line:
+						return line.split("=>").pop().strip()
+			else:
+				result = stdout_lines.pop().split(":", 1).pop().strip()
+				if result:
+					return result
 
 
 if sys.platform == "win32" and sys.getwindowsversion() >= (6, ):
