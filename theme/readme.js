@@ -129,6 +129,14 @@ jQuery(function ($) {
 			$this.attr('href', 'mailto:' + email).html(email);
 		}
 	});
+
+	/* Track outbound links */
+	if (location.protocol != 'file:') $('a[href^="http://"]:not([href^="http://displaycal.net"], [href^="http://hub.displaycal.net"], [href^="http://colorimetercorrections.displaycal.net"]), a[href^="https://"]:not([href^="https://displaycal.net"], [href^="https://hub.displaycal.net"], [href^="https://colorimetercorrections.displaycal.net"])').each(function () {
+		this.target = "_blank";
+	}).click(function () {
+		$.get(location.protocol + "//outbound.displaycal.net/" + this.hostname + this.pathname);
+		return true;
+	});
 	
 	/* Indent after br */
 	$('#content p > br').after('<span class="indent"></span>')
