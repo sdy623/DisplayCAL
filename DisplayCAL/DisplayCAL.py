@@ -13380,7 +13380,8 @@ class MainFrame(ReportFrame, BaseFrame):
 									min((chk.Size[1] * min(len(self.related_files),
 														   20)) * scale,
 										max(self.GetDisplay().ClientArea[3] -
-											dlg.Size[1], chk.Size[1])))
+											dlg.Size[1] - 40 * scale,
+											chk.Size[1])))
 				dlg.sizer0.SetSizeHints(dlg)
 				dlg.sizer0.Layout()
 				dlg.Center()
