@@ -633,6 +633,8 @@
 		"*is_illuminant": "Is illuminant",
 		"*is_linear": "Is linear",
 	"laptop.icc": "Portatil (Gamma 2.2)",
+		"*libXss.so": "X11 screen saver extension",
+		"*library.not_found.warning": "The library “%s” (%s) was not found. Please make sure it is installed before proceeding.",
 	"license": "Licencia",
 	"license_info": "Licenciado bajo la GPL",
 	"linear": "lineal",

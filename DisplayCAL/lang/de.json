@@ -633,6 +633,8 @@
 	"is_illuminant": "Ist Leuchtmittel",
 	"is_linear": "Ist linear",
 	"laptop.icc": "Laptop (Gamma 2.2)",
+	"libXss.so": "X11-Erweiterung für Bildschirmschoner",
+	"library.not_found.warning": "Die Bibliothek „%s“ (%s) wurde nicht gefunden. Bitte stellen Sie sicher, dass diese installiert ist, bevor Sie fortfahren.",
 	"license": "Lizenz",
 	"license_info": "Lizensiert unter der GPL",
 	"linear": "linear",

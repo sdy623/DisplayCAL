@@ -635,6 +635,8 @@
 	"is_linear": "Is linear",
 	"ISO_12646-2008_color_accuracy_and_gray_balance.ti1": "ISO 12646:2008 color accuracy and gray balance",
 	"laptop.icc": "Laptop (Gamma 2.2)",
+	"library.not_found.warning": "The library “%s” (%s) was not found. Please make sure it is installed before proceeding.",
+	"libXss.so": "X11 screen saver extension",
 	"license": "License",
 	"license_info": "Licensed under the GPL",
 	"linear": "linear",

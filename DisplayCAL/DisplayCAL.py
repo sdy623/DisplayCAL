@@ -104,7 +104,7 @@ from util_http import encode_multipart_formdata
 from util_io import StringIOu as StringIO, TarFileProper
 from util_list import index_fallback_ignorecase, intlist, natsort
 from util_os import (expanduseru, get_program_file, getenvu, is_superuser,
-					 launch_file, listdir_re, waccess, which)
+					 launch_file, listdir_re, waccess, whereis, which)
 from util_str import (ellipsis, safe_str, safe_unicode, strtr,
 					  universal_newlines, wrap)
 import util_x
@@ -333,10 +333,22 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 						cancel=lang.getstr("cancel"), 
 						bitmap=geticon(32, "dialog-information"), 
 						log=True)
+	scale = getcfg("app.dpi") / config.get_default_dpi()
+	if scale < 1:
+		scale = 1
+	if (argyll and sys.platform not in ("darwin", "win32") and
+		not whereis("libXss.so")):
+		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		dlg.sizer3.Insert(0, sizer, flag=wx.BOTTOM | wx.ALIGN_LEFT,
+						  border=12)
+		sizer.Add(wx.StaticBitmap(dlg, -1, geticon(16, "dialog-warning")))
+		warning_text = lang.getstr("library.not_found.warning",
+								   (lang.getstr("libXss.so"), "libXss.so"))
+		warning = wx.StaticText(dlg, -1, warning_text)
+		warning.ForegroundColour = "#F07F00"
+		sizer.Add(warning, flag=wx.LEFT, border=8)
+		warning.Wrap((500 - 16 - 8) * scale)
 	if chglog:
-		scale = getcfg("app.dpi") / config.get_default_dpi()
-		if scale < 1:
-			scale = 1
 		htmlwnd = wx.html.HtmlWindow(dlg, -1, size=(500 * scale, 300 * scale),
 									 style=wx.BORDER_THEME)
 		if "gtk3" in wx.PlatformInfo:
