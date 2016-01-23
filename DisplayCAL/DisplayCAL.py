@@ -465,7 +465,14 @@ def app_update_confirm(parent=None, newversion_tuple=(0, 0, 0, 0), chglog=None,
 		launch_file("http://" + domain + path)
 	elif not argyll:
 		# Check for Argyll update
-		parent.app_update_check_handler(None, silent, True)
+		if check_argyll_bin():
+			parent.app_update_check_handler(None, silent, True)
+		elif silent:
+			parent.set_argyll_bin_handler(True, silent,
+										  parent.check_instrument_setup,
+										  (check_donation, (parent, snapshot)))
+		else:
+			parent.set_argyll_bin_handler(True)
 		return
 	if silent:
 		# Check if we need to run instrument setup
