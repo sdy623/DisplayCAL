@@ -13929,15 +13929,20 @@ class StartupFrame(wx.Frame):
 		if VERSION > VERSION_BASE:
 			label_str += " Beta"
 		dc.SetTextForeground("#101010")
-		dc.DrawLabel(label_str, wx.Rect(rect.x, 110, rect.width,
+		yoff = 10
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale > 1:
+			yoff = int(round(yoff * scale))
+		yoff -= 10
+		dc.DrawLabel(label_str, wx.Rect(rect.x, 110 + yoff, rect.width,
 										32), wx.ALIGN_CENTER |
 															wx.ALIGN_TOP)
 		dc.SetTextForeground(wx.BLACK)
-		dc.DrawLabel(label_str, wx.Rect(rect.x, 111, rect.width,
+		dc.DrawLabel(label_str, wx.Rect(rect.x, 111 + yoff, rect.width,
 										32), wx.ALIGN_CENTER |
 															wx.ALIGN_TOP)
 		dc.SetTextForeground("#CCCCCC")
-		dc.DrawLabel(label_str, wx.Rect(rect.x, 112, rect.width,
+		dc.DrawLabel(label_str, wx.Rect(rect.x, 112 + yoff, rect.width,
 										32), wx.ALIGN_CENTER |
 															wx.ALIGN_TOP)
 		# Message
