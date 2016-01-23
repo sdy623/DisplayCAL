@@ -4221,7 +4221,7 @@ class BetterStaticFancyText(GenStaticBitmap):
 			cls = wx.BufferedPaintDC
 		dc = cls(self)
 		dc.SetBackground(wx.Brush(self.Parent.BackgroundColour, wx.SOLID))
-		dc.SetBackgroundMode(wx.SOLID)
+		dc.SetBackgroundMode(wx.TRANSPARENT)
 		dc.Clear()
 		if sys.platform != "win32":
 			fancytext.RenderToDC(self._label, dc, 0, 0)
