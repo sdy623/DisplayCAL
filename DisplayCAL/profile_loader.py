@@ -11,7 +11,7 @@ import sys
 import threading
 import time
 
-from meta import name as appname, version
+from meta import VERSION, VERSION_BASE, name as appname, version, version_short
 
 
 class ProfileLoader(object):
@@ -458,7 +458,9 @@ class ProfileLoader(object):
 	def get_title(self):
 		import localization as lang
 		title = "%s %s %s" % (appname, lang.getstr("profile_loader").title(),
-							  version)
+							  version_short)
+		if VERSION > VERSION_BASE:
+			title += " Beta"
 		if "--force" in sys.argv[1:]:
 			title += " (%s)" % lang.getstr("forced")
 		return title

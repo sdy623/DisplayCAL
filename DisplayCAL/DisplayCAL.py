@@ -95,7 +95,7 @@ from debughelpers import ResourceError, getevtobjname, getevttype, handle_error
 from edid import pnpidcache, get_manufacturer_name
 from log import log, logbuffer, safe_print
 from meta import (VERSION, VERSION_BASE, author, name as appname, domain,
-				  version)
+				  version, version_short)
 from options import debug, test, verbose
 from ordereddict import OrderedDict
 from trash import trash, TrashAborted, TrashcanUnavailableError
@@ -1543,7 +1543,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		# UGLY HACK: This 'safe_print' call fixes a GTK assertion and 
 		# segfault under Arch Linux when setting the window title
 		safe_print("")
-		title = "%s %s" % (appname, version)
+		title = "%s %s" % (appname, version_short)
 		if VERSION > VERSION_BASE:
 			title += " Beta"
 		self.SetTitle(title)
@@ -6435,7 +6435,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				return
 		
 		# let the user choose a location for the result
-		defaultFile = u"Measurement Report %s — %s — %s" % (version,
+		defaultFile = u"Measurement Report %s — %s — %s" % (version_short,
 			re.sub(r"[\\/:*?\"<>|]+", "_",
 			self.display_ctrl.GetStringSelection().replace(" " +
 														   lang.getstr("display.primary"),
@@ -6887,7 +6887,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							 "${CAL_ENTRYCOUNT}": str(cal_entrycount),
 							 "${CAL_RGBLEVELS}": repr(cal_rgblevels),
 							 "${GRAYSCALE}": repr(gray) if gray else 'null',
-							 "${REPORT_VERSION}": version}
+							 "${REPORT_VERSION}": version_short}
 		
 		# create report
 		try:
@@ -13489,7 +13489,7 @@ class MainFrame(ReportFrame, BaseFrame):
 			shadow.blend = True
 			items.append(shadow)
 		items.append((1, 8))
-		version_title = version
+		version_title = version_short
 		if VERSION > VERSION_BASE:
 			version_title += " Beta"
 		items.append(wx.StaticText(self.aboutdialog, -1, u"%s %s © %s" %
@@ -13681,7 +13681,7 @@ class MainFrame(ReportFrame, BaseFrame):
 class StartupFrame(wx.Frame):
 
 	def __init__(self):
-		title = "%s %s" % (appname, version)
+		title = "%s %s" % (appname, version_short)
 		if VERSION > VERSION_BASE:
 			title += " Beta"
 		wx.Frame.__init__(self, None, title="%s: %s" % (title,
@@ -13925,7 +13925,7 @@ class StartupFrame(wx.Frame):
 					   self.splash_bmp.Size[0], 40)
 		dc.SetFont(self.GetFont())
 		# Version label
-		label_str = version
+		label_str = version_short
 		if VERSION > VERSION_BASE:
 			label_str += " Beta"
 		dc.SetTextForeground("#101010")

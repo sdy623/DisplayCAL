@@ -5,6 +5,7 @@
 
 """
 
+import re
 import sys
 
 try:
@@ -45,6 +46,7 @@ version_lin = VERSION_STRING # Linux
 version_mac = VERSION_STRING # Mac OS X
 version_win = VERSION_STRING # Windows
 version_src = VERSION_STRING
+version_short = re.sub("(?:\.0){1,2}$", "", version)
 
 version_tuple = VERSION # only ints allowed and must be exactly 4 values
 
