@@ -13377,8 +13377,9 @@ class MainFrame(ReportFrame, BaseFrame):
 										wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X),
 										self.GetDisplay().ClientArea[2] -
 										(12 * 3 + 32) * scale),
-									min((chk.Size[1] * min(len(self.related_files),
-														   20)) * scale,
+									min(((chk.Size[1] + 4) *
+										 min(len(self.related_files),
+											 20) - 4) * scale,
 										max(self.GetDisplay().ClientArea[3] -
 											dlg.Size[1] - 40 * scale,
 											chk.Size[1])))
