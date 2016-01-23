@@ -594,7 +594,7 @@ def whereis(filename):
 		except:
 			pass
 		else:
-			stdout_lines = stdout.strip().splitlines()
+			stdout_lines = stdout.strip().split(os.linesep)
 			if args[0] == "ldconfig":
 				for line in stdout_lines:
 					if filename in line:
