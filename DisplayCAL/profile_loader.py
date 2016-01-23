@@ -112,6 +112,7 @@ class ProfileLoader(object):
 					icon = wx.EmptyIcon()
 					icon.CopyFromBitmap(image.ConvertToBitmap())
 					self._inactive_icon = icon
+					self._active_icon_reset = config.get_bitmap_as_icon(16, appname + "-apply-profiles-reset")
 					self.set_visual_state(True)
 					self.Bind(wx.EVT_TASKBAR_LEFT_DOWN, self.on_left_down)
 
@@ -187,7 +188,10 @@ class ProfileLoader(object):
 
 				def set_visual_state(self, enumerate_windows_and_processes=False):
 					if self.pl._should_apply_profiles(enumerate_windows_and_processes):
-						icon = self._active_icon
+						if self.pl._reset_gamma_ramps:
+							icon = self._active_icon_reset
+						else:
+							icon = self._active_icon
 					else:
 						icon = self._inactive_icon
 					self.SetIcon(icon, self.pl.get_title())
