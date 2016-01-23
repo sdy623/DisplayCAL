@@ -593,7 +593,7 @@ def whereis(filename):
 		except:
 			pass
 		else:
-			result = stdout.split(os.linesep).pop().split(":", 1).pop().strip()
+			result = stdout.strip().split(os.linesep).pop().split(":", 1).pop().strip()
 			if result:
 				return result
 
