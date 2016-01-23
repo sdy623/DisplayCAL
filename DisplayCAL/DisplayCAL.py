@@ -734,7 +734,14 @@ def get_cgats_path(cgats):
 
 def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 			   repeat_sub_bitmap_h=(220, 0, 2, 60)):
+	w, h = 222, 60
 	scale = getcfg("app.dpi") / config.get_default_dpi()
+	if scale > 1:
+		size = tuple(int(math.floor(v * scale)) if v > 0 else v for v in size)
+		x, y = [int(round(v * scale)) if v else v for v in (x, y)]
+		repeat_sub_bitmap_h = tuple(int(math.floor(v * scale))
+									for v in repeat_sub_bitmap_h)
+		w, h = [int(round(v * scale)) for v in (w, h)]
 	header = BitmapBackgroundPanelText(parent)
 	header.label_x = x
 	header.label_y = y
@@ -744,27 +751,10 @@ def get_header(parent, bitmap=None, label=None, size=(-1, 60), x=80, y=40,
 	header.SetForegroundColour("#FFFFFF")
 	header.SetMaxFontSize(11)
 	label = label or lang.getstr("header")
-	if scale > 1:
-		lines = label.split("\n")
-		label_h = len(lines) * header.GetTextExtent(lines[0])[1]
 	if not bitmap:
 		bitmap = getbitmap("theme/header", False)
-		h = 60
-		if scale > 1:
-			h = h - label_h + label_h * scale
-		if bitmap.Size[0] >= 220 and bitmap.Size[1] >= h:
-			bitmap = bitmap.GetSubBitmap((0, 0, 222, h))
-	if scale > 1:
-		size = (-1, size[1] - label_h + label_h * scale)
-		y = repeat_sub_bitmap_h[1]
-		if y:
-			y = y - label_h + label_h * scale
-		if y + (repeat_sub_bitmap_h[3] - repeat_sub_bitmap_h[1]) < bitmap.Size[1]:
-			repeat_sub_bitmap_h = (repeat_sub_bitmap_h[0],
-								   y,
-								   repeat_sub_bitmap_h[2],
-								   repeat_sub_bitmap_h[3] -
-								   repeat_sub_bitmap_h[1] + y)
+		if bitmap.Size[0] >= w and bitmap.Size[1] >= h:
+			bitmap = bitmap.GetSubBitmap((0, 0, w, h))
 	header.MinSize = size
 	header.repeat_sub_bitmap_h = repeat_sub_bitmap_h
 	header.SetBitmap(bitmap)
@@ -1586,14 +1576,18 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.header = get_header(self.panel)
 		self.headerpanel = self.FindWindowByName("headerpanel")
 		self.headerpanel.ContainingSizer.Insert(0, self.header, flag=wx.EXPAND)
-		self.header_btm = BitmapBackgroundPanel(self.headerpanel, size=(80, -1))
+		y = 60
+		w = 80
+		h = 120
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale > 1:
+			y, w, h = [int(math.floor(v * scale)) for v in (y, w, h)]
+		self.header_btm = BitmapBackgroundPanel(self.headerpanel, size=(w, -1))
 		self.header_btm.BackgroundColour = "#336699"
 		self.header_btm.scalebitmap = False, False
 		header_bmp = getbitmap("theme/header", False)
-		if (header_bmp.Size[0] >= 80 and header_bmp.Size[1] >= 180 and
-			self.header.MinSize[1] < 120):
-			header_bmp = header_bmp.GetSubBitmap((0, self.header.MinSize[1], 80,
-												  180 - self.header.MinSize[1]))
+		if header_bmp.Size[0] >= w and header_bmp.Size[1] >= h + y:
+			header_bmp = header_bmp.GetSubBitmap((0, y, w, h))
 			self.header_btm.SetBitmap(header_bmp)
 		self.headerpanel.Sizer.Insert(0, self.header_btm, flag=wx.ALIGN_TOP |
 															   wx.EXPAND)
@@ -1800,8 +1794,11 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def OnResize(self, event):
 		# Hide the header bitmap on small screens
+		scale = getcfg("app.dpi") / config.get_default_dpi()
+		if scale < 1:
+			scale = 1
 		self.header.GetContainingSizer().Show(
-			self.header, self.Size[1] > 480)
+			self.header, self.Size[1] > 480 * scale)
 		event.Skip()
 
 	def cal_drop_handler(self, path):
@@ -1987,8 +1984,10 @@ class MainFrame(ReportFrame, BaseFrame):
 		borders_lr = self.Size[0] - self.ClientSize[0]
 		scale = getcfg("app.dpi") / config.get_default_dpi()
 		margin = 34
+		header_min_h = 64
 		if scale > 1:
 			margin = int(round(margin * scale))
+			header_min_h = int(round(header_min_h * scale))
 		size = (min(self.GetDisplay().ClientArea[2], 
 					max(self.GetMinSize()[0],
 					    max(self.display_instrument_panel.Sizer.MinSize[0],
@@ -2004,7 +2003,7 @@ class MainFrame(ReportFrame, BaseFrame):
 								 else max(size[0], self.Size[0])) - borders_lr,
 								size[1]))
 		self.SetMinSize((size[0], self.GetSize()[1] - 
-								  self.calpanel.GetSize()[1] + 64))
+								  self.calpanel.GetSize()[1] + header_min_h))
 		if self.IsFrozen():
 			self.Thaw()
 		if self.IsShown():
