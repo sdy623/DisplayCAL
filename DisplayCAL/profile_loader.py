@@ -134,8 +134,10 @@ class ProfileLoader(object):
 							moninfo) in enumerate(self.pl.monitors):
 						displays = get_display_devices(moninfo["Device"])
 						if len(displays) > 1:
-							fix = self.pl._toggle_fix_profile_associations
+							fix = True
 							break
+					if fix:
+						fix = self.pl._toggle_fix_profile_associations
 
 					for (label, method, kind, option,
 						 oxform) in (("calibration.load_from_display_profiles",
@@ -162,7 +164,7 @@ class ProfileLoader(object):
 						else:
 							item = wx.MenuItem(menu, -1, lang.getstr(label),
 											   kind=kind)
-							if method is None:
+							if not method:
 								item.Enable(False)
 							else:
 								menu.Bind(wx.EVT_MENU, method, id=item.Id)
