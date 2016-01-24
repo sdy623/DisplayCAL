@@ -12180,24 +12180,25 @@ class MainFrame(ReportFrame, BaseFrame):
 		if event:
 			setcfg("testchart.auto_optimize", auto)
 			self.profile_settings_changed()
-		proftype_changed = False
+		proftype = getcfg("profile.type")
 		if auto > 4:
 			s = min(auto, 11) * 4 - 3
 			g = s * 3 - 2
 			patches_amount = get_total_patches(4, 4, s, g, auto, auto, 0) + 154
-			if event and getcfg("profile.type") not in ("l", "x", "X"):
+			if event and proftype not in ("l", "x", "X"):
 				setcfg("profile.type", "x" if getcfg("3dlut.create") else "X")
-				proftype_changed = True
 		else:
 			if auto == 3:
 				patches_amount = 73
 			else:
 				patches_amount = 97
-			if event and getcfg("profile.type") not in ("g", "G", "s", "S"):
+			if event and proftype not in ("g", "G", "s", "S"):
 				setcfg("profile.type", "S" if getcfg("trc") else "s")
-				proftype_changed = True
-		if proftype_changed:
+		if proftype != getcfg("profile.type"):
 			self.update_profile_type_ctrl()
+			# Reset profile type to previous value so the handler method will
+			# recognize a change in profile type and update BPC accordingly
+			setcfg("profile.type", proftype)
 			self.profile_type_ctrl_handler(None)
 		self.testchart_patches_amount.SetLabel(str(patches_amount))
 		self.update_estimated_measurement_time("testchart")
