@@ -270,6 +270,7 @@ def main(module=None):
 			error = Error(u"Fatal error: " +
 						  safe_unicode(traceback.format_exc()))
 		handle_error(error)
+		_exit(lockfilename, port)
 
 
 def _exit(lockfilename, port):
