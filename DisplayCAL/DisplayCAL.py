@@ -3911,7 +3911,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	
 	def update_bpc(self, enable_profile=True):
 		enable_bpc = ((self.get_profile_type() in ("s", "S") or
-					   (self.get_profile_type() in ("x", "X") and
+					   (self.get_profile_type() in ("l", "x", "X") and
 						(getcfg("profile.b2a.hires") or
 						 getcfg("profile.quality.b2a") in ("l", "n")))) and
 					  enable_profile)
