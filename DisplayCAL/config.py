@@ -153,7 +153,10 @@ resfiles = [
 	"ref/ClayRGB1998.gam",
 	"ref/sRGB.gam",
 	"ref/verify_extended.ti1",
-	"xrc/3dlut.xrc",
+	"ti1/d3-e4-s0-g25-m3-b3-f0-crossover.ti1",
+	"ti1/d3-e4-s0-g49-m3-b3-f0-crossover.ti1",
+	"ti1/d3-e4-s13-g37-m4-b4-f0.ti1",
+	"ti1/d3-e4-s17-g49-m5-b5-f0.ti1",
 	"xrc/extra.xrc",
 	"xrc/gamap.xrc",
 	"xrc/main.xrc",
@@ -1046,14 +1049,14 @@ if lcode:
 	defaults["lang"] = lcode.split("_")[0].lower()
 
 testchart_defaults = {
-	"s": {None: "d3-e4-s0-g25-m3-b3-f0-crossover.ti1"},  # shaper + matrix
-	"l": {None: "d3-e4-s17-g49-m5-b5-f0.ti1"},  # lut
-	"g": {None: "d3-e4-s0-g25-m3-b3-f0-crossover.ti1"}  # gamma + matrix
+	"s": {None: "auto"},  # shaper + matrix
+	"l": {None: "auto"},  # lut
+	"g": {None: "auto"}  # gamma + matrix
 }
 
 def _init_testcharts():
 	for testcharts in testchart_defaults.values():
-		for chart in testcharts.values():
+		for chart in filter(lambda value: value != "auto", testcharts.values()):
 			resfiles.append(os.path.join("ti1", chart))
 	testchart_defaults["G"] = testchart_defaults["g"]
 	testchart_defaults["S"] = testchart_defaults["s"]

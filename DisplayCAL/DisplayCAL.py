@@ -4567,7 +4567,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		self.profile_settings_changed()
 		setcfg("profile.quality", q)
 		self.update_profile_name()
-		self.set_default_testchart(False, force=True)
+		self.set_default_testchart(False)
 		wx.CallAfter(self.check_testchart_patches_amount)
 
 	def calibration_file_ctrl_handler(self, event):
@@ -10858,11 +10858,13 @@ class MainFrame(ReportFrame, BaseFrame):
 		lut_type = v in ("l", "x", "X")
 		self.gamap_btn.Enable(lut_type)
 		
-		if v in ("x", "X"):
+		proftype_changed = False
+		if v in ("l", "x", "X"):
 			# XYZ LUT type
-			if getcfg("profile.type") not in ("x", "X"):
+			if getcfg("profile.type") not in ("l", "x", "X"):
 				# Disable black point compensation for LUT profiles
 				setcfg("profile.black_point_compensation", 0)
+				proftype_changed = True
 		elif v in ("s", "S"):
 			# Shaper + matrix type
 			if getcfg("profile.type") not in ("s", "S"):
@@ -10870,6 +10872,9 @@ class MainFrame(ReportFrame, BaseFrame):
 				setcfg("profile.black_point_compensation", 1)
 		else:
 			setcfg("profile.black_point_compensation", 0)
+		if v in ("s", "S", "g", "G"):
+			if getcfg("profile.type") not in ("s", "S", "g", "G"):
+				proftype_changed = True
 		self.update_bpc()
 		self.profile_quality_ctrl.Enable(v not in ("g", "G"))
 		if v in ("g", "G"):
@@ -10882,7 +10887,7 @@ class MainFrame(ReportFrame, BaseFrame):
 		if hasattr(self, "gamapframe"):
 			self.gamapframe.update_controls()
 		self.update_profile_name()
-		self.set_default_testchart(force=True)
+		self.set_default_testchart(force=proftype_changed)
 		if event:
 			self.check_testchart_patches_amount()
 	
@@ -12222,7 +12227,16 @@ class MainFrame(ReportFrame, BaseFrame):
 	def set_default_testchart(self, alert=True, force=False):
 		path = getcfg("testchart.file")
 		##print "set_default_testchart", path
+		if getcfg("profile.type") in ("l", "x", "X"):
+			# cLUT
+			if getcfg("testchart.auto_optimize") < 5:
+				setcfg("testchart.auto_optimize", 5)
+		else:
+			# Gamma or shaper + matrix
+			if getcfg("testchart.auto_optimize") > 4:
+				setcfg("testchart.auto_optimize", 3)
 		if path == "auto":
+			self.set_testchart(path)
 			return
 		if os.path.basename(path) in self.dist_testchart_names:
 			path = self.dist_testcharts[
@@ -12239,18 +12253,20 @@ class MainFrame(ReportFrame, BaseFrame):
 				ti1 = self.testchart_defaults[self.get_profile_type()].get(
 					self.get_profile_quality(), 
 					self.testchart_defaults[self.get_profile_type()][None])
-			path = get_data_path(os.path.join("ti1", ti1))
-			if not path or not os.path.isfile(path):
-				if alert:
-					InfoDialog(self, 
-							   msg=lang.getstr("error.testchart.missing", ti1), 
-							   ok=lang.getstr("ok"), 
-							   bitmap=geticon(32, "dialog-error"))
-				elif verbose >= 1:
-					safe_print(lang.getstr("error.testchart.missing", ti1))
-				return False
+			if ti1 != "auto":
+				path = get_data_path(os.path.join("ti1", ti1))
+				if not path or not os.path.isfile(path):
+					if alert:
+						InfoDialog(self, 
+								   msg=lang.getstr("error.testchart.missing", ti1), 
+								   ok=lang.getstr("ok"), 
+								   bitmap=geticon(32, "dialog-error"))
+					elif verbose >= 1:
+						safe_print(lang.getstr("error.testchart.missing", ti1))
+					return False
 			else:
-				self.set_testchart(path)
+				path = ti1
+			self.set_testchart(path)
 			return True
 		return None
 
