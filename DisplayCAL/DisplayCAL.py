@@ -10886,8 +10886,8 @@ class MainFrame(ReportFrame, BaseFrame):
 		setcfg("profile.type", v)
 		if hasattr(self, "gamapframe"):
 			self.gamapframe.update_controls()
-		self.update_profile_name()
 		self.set_default_testchart(force=proftype_changed)
+		self.update_profile_name()
 		if event:
 			self.check_testchart_patches_amount()
 	
