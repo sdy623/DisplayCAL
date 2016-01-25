@@ -66,7 +66,7 @@ class SafePrinter():
 			if isinstance(arg, unicode) and encoding:
 				arg = arg.encode(encoding, "replace")
 			strargs.append(arg)
-		line = sep.join(strargs).rstrip()
+		line = sep.join(strargs).rstrip(end)
 		try:
 			conwidth = int(os.getenv("COLUMNS"))
 		except (TypeError, ValueError):
