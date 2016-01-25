@@ -4767,13 +4767,14 @@ while 1:
 					   colormath.Interp(rY, xpG),
 					   colormath.Interp(rZ, xpB))
 		else:
-			Linterp = (colormath.Interp(xpR, fpL),
-					   colormath.Interp(xpG, fpL),
-					   colormath.Interp(xpB, fpL))
-			rLinterp = (colormath.Interp(fpL, xpR),
-						colormath.Interp(fpL, xpG),
-						colormath.Interp(fpL, xpB))
 			maxL = 100.0 + 25500.0 / 65280.0
+			Labbp = colormath.XYZ2Lab(*[v * 100 for v in XYZbp])
+			oldmin = 0.0
+			oldmax = 1.0
+			oldrange = oldmax - oldmin
+			newmin = 0.0
+			newmax = maxL / 100
+			newrange = newmax - newmin
 		# Set input curves
 		# Apply inverse TRC to input values to distribute them
 		# optimally across cLUT grid points
@@ -4786,17 +4787,14 @@ while 1:
 			if profile.connectionColorSpace == "XYZ":
 				v = [rinterp[i](j / maxval) for i in xrange(3)]
 			else:
-				XYZ = fpX[j], fpY[j], fpZ[j]
-				v = list(colormath.XYZ2Lab(*[n * 100 for n in XYZ]))
-				v[0] = j / maxval
-				v[1] = j / maxval + v[1] / (127 + (255 / 256.0))
-				v[2] = j / maxval + v[2] / (127 + (255 / 256.0))
+				# CIELab PCS encoding
+				l = (((j / maxval - oldmin) * newrange) / oldrange) + newmin
+				if l < Labbp[0] / 100:
+					l = 0
+				v = [l]
+				v.extend([j / maxval] * 2)
 			for i in xrange(len(itable.input)):
-				if profile.connectionColorSpace == "Lab":
-					if i == 0:
-						# L*
-						v[0] = rLinterp[i](v[0] * maxL)
-				itable.input[i].append(v[i] * 65535)
+				itable.input[i].append(min(v[i] * 65535, 65535))
 			if logfile and j % math.floor(maxval / 100.0) == 0:
 				logfile.write("\r%i%%" % round(j / maxval * 100))
 		if logfile:
@@ -4870,8 +4868,7 @@ while 1:
 														  profile.tags.wtpt.ir.values()])
 						else:
 							# Legacy CIELAB
-							d = Linterp[1](d)
-							v = d, -128 + e * abmaxval, -128 + f * abmaxval
+							v = d * 100, -128 + e * abmaxval, -128 + f * abmaxval
 						idata.append("%.6f %.6f %.6f" % tuple(v))
 						# Lookup CIE -> device values through profile using xicclu
 						if not use_cam_clipping or (a <= threshold and
@@ -4891,8 +4888,18 @@ while 1:
 			xicclu1.exit()
 			if logfile:
 				logfile.write("\n")
-				logfile.write("Input black XYZ: %s\n" % idata[0])
-				logfile.write("Input white XYZ: %s\n" % idata[-1])
+			if logfile and (pcs == "x" or clutres // 2 != clutres / 2.0):
+				if pcs == "x":
+					iXYZbp = idata[0]
+					iXYZwp = idata[-1]
+					logfile.write("Input black XYZ: %s\n" % iXYZbp)
+					logfile.write("Input white XYZ: %s\n" % iXYZwp)
+				else:
+					iLabbp = idata[clutres * (clutres // 2) + clutres // 2]
+					iLabwp = idata[(clutres ** 2 * (clutres - 1) +
+								   clutres * (clutres // 2) + clutres // 2)]
+					logfile.write("Input black L*a*b*: %s\n" % iLabbp)
+					logfile.write("Input white L*a*b*: %s\n" % iLabwp)
 
 			odata1 = xicclu1.get()
 			if use_cam_clipping:
@@ -4933,11 +4940,18 @@ while 1:
 				raise ValueError("Number of cLUT entries (%s) exceeds cLUT res "
 								 "maximum (%s^3 = %s)" % (numrows, clutres,
 														  clutres ** 3))
-			if logfile:
+			if logfile and (pcs == "x" or clutres // 2 != clutres / 2.0):
+				if pcs == "x":
+					oRGBbp = odata[0]
+					oRGBwp = odata[-1]
+				else:
+					oRGBbp = odata[clutres * (clutres // 2) + clutres // 2]
+					oRGBwp = odata[(clutres ** 2 * (clutres - 1) +
+								   clutres * (clutres // 2) + clutres // 2)]
 				logfile.write("Output black RGB: %.4f %.4f %.4f\n" %
-							  tuple(odata[0]))
+							  tuple(oRGBbp))
 				logfile.write("Output white RGB: %.4f %.4f %.4f\n" %
-							  tuple(odata[-1]))
+							  tuple(oRGBwp))
 			odata = [[n / 100.0 for n in v] for v in odata]
 
 		# Fill cCLUT
@@ -4966,10 +4980,21 @@ while 1:
 					if logfile:
 						logfile.write("\r%i%%" % round(i / (numrows - 1.0) * 100))
 				# Set RGB black and white explicitly
-				if i == 0:
-					RGB = 0, 0, 0
-				elif i == numrows - 1.0:
-					RGB = 1, 1, 1
+				if pcs == "x":
+					if i == 0:
+						RGB = 0, 0, 0
+					elif i == numrows - 1.0:
+						RGB = 1, 1, 1
+				elif clutres // 2 != clutres / 2.0:
+					# For CIELab cLUT, white- and black point will only
+					# fall on a cLUT point if uneven cLUT res
+					if i == clutres * (clutres // 2) + clutres // 2:
+						##if raw_input("%i %r" % (i, RGB)):
+						RGB = 0, 0, 0
+					elif i == (clutres ** 2 * (clutres - 1) +
+							   clutres * (clutres // 2) + clutres // 2):
+						##if raw_input("%i %r" % (i, RGB)):
+						RGB = 1, 1, 1
 				itable.clut[-1].append([v * 65535 for v in RGB])
 		if logfile:
 			logfile.write("\n")
@@ -4995,7 +5020,17 @@ while 1:
 			for i, grid in enumerate(grids):
 				for y in xrange(clutres):
 					for x in xrange(clutres):
-						if sum(grid[y][x]) < 65535 * .0625 * 3 or x == y == i:
+						is_dark = sum(grid[y][x]) < 65535 * .03125 * 3
+						if pcs == "x":
+							is_gray = x == y == i
+						elif clutres // 2 != clutres / 2.0:
+							# For CIELab cLUT, gray will only
+							# fall on a cLUT point if uneven cLUT res
+							is_gray = x == y == clutres // 2
+						else:
+							is_gray = False
+						##print i, y, x, "%i %i %i" % tuple(v / 655.35 * 2.55 for v in grid[y][x]), is_dark, raw_input(is_gray) if is_gray else ''
+						if is_dark or is_gray:
 							# Don't smooth dark colors and gray axis
 							continue
 						RGB = [[v] for v in grid[y][x]]
@@ -6595,7 +6630,7 @@ usage: spotread [-options] [logfile]
 				# A2B processing
 				process_A2B = ("A2B0" in profile.tags and
 							   profile.colorSpace == "RGB" and
-							   profile.connectionColorSpace == "XYZ" and
+							   profile.connectionColorSpace in ("XYZ", "Lab") and
 							   (getcfg("profile.b2a.hires") or
 								getcfg("profile.quality.b2a") in ("l", "n")))
 				if ("rTRC" in profile.tags and
@@ -7406,7 +7441,7 @@ usage: spotread [-options] [logfile]
 					gamap_args.append("-d" + getcfg("gamap_out_viewcond"))
 			b2a_q = getcfg("profile.quality.b2a")
 			if (getcfg("profile.b2a.hires") and
-				getcfg("profile.type") in ("x", "X") and
+				getcfg("profile.type") in ("l", "x", "X") and
 				not (gamap and gamap_profile)):
 				# Disable B2A creation in colprof, B2A is handled
 				# by A2B inversion code

@@ -1192,7 +1192,7 @@ class GamapFrame(BaseFrame):
 			self.low_quality_b2a_cb.GetValue()):
 			self.b2a_hires_cb.Enable(False)
 		else:
-			self.b2a_hires_cb.Enable(getcfg("profile.type") in ("x", "X"))
+			self.b2a_hires_cb.Enable(getcfg("profile.type") in ("l", "x", "X"))
 		hires = self.b2a_hires_cb.GetValue()
 		self.low_quality_b2a_cb.Enable(not hires)
 		if hires:
@@ -1274,7 +1274,7 @@ class GamapFrame(BaseFrame):
 
 		# B2A quality
 		enable_gamap = getcfg("profile.type") in ("l", "x", "X")
-		enable_b2a_extra = getcfg("profile.type") in ("x", "X")
+		enable_b2a_extra = getcfg("profile.type") in ("l", "x", "X")
 		b2a_hires = enable_b2a_extra and bool(getcfg("profile.b2a.hires"))
 		self.low_quality_b2a_cb.SetValue(enable_gamap and
 										 getcfg("profile.quality.b2a") in
@@ -4502,7 +4502,7 @@ class MainFrame(ReportFrame, BaseFrame):
 	def lut3d_update_b2a_controls(self):
 		# Allow using B2A instead of inverse A2B?
 		if getcfg("3dlut.create"):
-			allow_b2a_gamap = (getcfg("profile.type") in ("x", "X") and
+			allow_b2a_gamap = (getcfg("profile.type") in ("l", "x", "X") and
 							   getcfg("profile.b2a.hires"))
 		else:
 			profile = get_current_profile(True)
@@ -11329,7 +11329,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				   not isinstance(profile.tags.A2B1, ICCP.LUT16Type))):
 				result = Error(lang.getstr("profile.required_tags_missing",
 										   "LUT16Type"))
-			elif profile.connectionColorSpace != "XYZ":
+			elif profile.connectionColorSpace not in ("XYZ", "Lab"):
 				result = Error(lang.getstr("profile.unsupported",
 										   (profile.connectionColorSpace,
 											profile.connectionColorSpace)))
