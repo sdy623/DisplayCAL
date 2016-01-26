@@ -5006,47 +5006,14 @@ while 1:
 								  ("post", itable)]:
 				table.clut_writepng(fname + ".B2A%i.%s.CLUT.png" %
 									(tableno, suffix))
+
+		# Update profile
+		profile.tags["B2A%i" % tableno] = itable
+
 		if getcfg("profile.b2a.hires.smooth"):
-			# Apply extra smoothing to the cLUT
-			# Create a list of <clutres> number of 2D grids, each one with a
-			# size of (width x height) <clutres> x <clutres>
-			grids = []
-			for i, block in enumerate(itable.clut):
-				if i % clutres == 0:
-					grids.append([])
-				grids[-1].append([])
-				for RGB in block:
-					grids[-1][-1].append(RGB)
-			for i, grid in enumerate(grids):
-				for y in xrange(clutres):
-					for x in xrange(clutres):
-						is_dark = sum(grid[y][x]) < 65535 * .03125 * 3
-						if pcs == "x":
-							is_gray = x == y == i
-						elif clutres // 2 != clutres / 2.0:
-							# For CIELab cLUT, gray will only
-							# fall on a cLUT point if uneven cLUT res
-							is_gray = x == y == clutres // 2
-						else:
-							is_gray = False
-						##print i, y, x, "%i %i %i" % tuple(v / 655.35 * 2.55 for v in grid[y][x]), is_dark, raw_input(is_gray) if is_gray else ''
-						if is_dark or is_gray:
-							# Don't smooth dark colors and gray axis
-							continue
-						RGB = [[v] for v in grid[y][x]]
-						for j, c in enumerate((x, y)):
-							if c > 0 and c < clutres - 1 and y < clutres - 1:
-								for n in (-1, 1):
-									RGBn = grid[(y, y + n)[j]][(x + n, x)[j]]
-									for k in xrange(3):
-										RGB[k].append(RGBn[k])
-						grid[y][x] = [sum(v) / float(len(v)) for v in RGB]
-				for j, row in enumerate(grid):
-					itable.clut[i * clutres + j] = [[v for v in RGB]
-													for RGB in row]
-			if getcfg("profile.b2a.hires.diagpng") and filename:
-				itable.clut_writepng(fname + ".B2A%i.post.CLUT.extrasmooth.png" %
-									 tableno)
+			self.smooth_B2A(profile, tableno,
+							getcfg("profile.b2a.hires.diagpng"), filename,
+							logfile) 
 
 		# Set output curves
 		itable.output = [[], [], []]
@@ -5056,8 +5023,82 @@ while 1:
 			for j in xrange(numentries):
 				itable.output[i].append(j / maxval * 65535)
 		
-		# Update profile
-		profile.tags["B2A%i" % tableno] = itable
+		return True
+
+	def smooth_B2A(self, profile, tableno, diagpng=2, filename=None,
+				   logfile=None):
+		""" Apply extra smoothing to the cLUT """
+		if not filename:
+			filename = profile.fileName
+
+		itable = profile.tags.get("B2A%i" % tableno)
+		if not itable:
+			return False
+
+		clutres = len(itable.clut[0])
+
+		if diagpng and filename:
+			# Generate diagnostic images
+			fname, ext = os.path.splitext(filename)
+			if diagpng == 2:
+				itable.clut_writepng(fname + ".B2A%i.pre-smoothing.CLUT.png" %
+									 tableno)
+
+		if logfile:
+			logfile.write("Smoothing B2A%i...\n" % tableno)
+		# Create a list of <clutres> number of 2D grids, each one with a
+		# size of (width x height) <clutres> x <clutres>
+		grids = []
+		for i, block in enumerate(itable.clut):
+			if i % clutres == 0:
+				grids.append([])
+			grids[-1].append([])
+			for RGB in block:
+				grids[-1][-1].append(RGB)
+		for i, grid in enumerate(grids):
+			for y in xrange(clutres):
+				for x in xrange(clutres):
+					is_dark = sum(grid[y][x]) < 65535 * .03125 * 3
+					if profile.connectionColorSpace == "XYZ":
+						is_gray = x == y == i
+					elif clutres // 2 != clutres / 2.0:
+						# For CIELab cLUT, gray will only
+						# fall on a cLUT point if uneven cLUT res
+						is_gray = x == y == clutres // 2
+					else:
+						is_gray = False
+					##print i, y, x, "%i %i %i" % tuple(v / 655.35 * 2.55 for v in grid[y][x]), is_dark, raw_input(is_gray) if is_gray else ''
+					if is_dark or is_gray:
+						# Don't smooth dark colors and gray axis
+						continue
+					RGB = [[v] for v in grid[y][x]]
+					# Box filter, 3x3
+					# Center pixel weight = 1.0, surround = 0.5
+					for j in (0, 1):
+						for n in (-1, 1):
+							yi, xi = (y, y + n)[j], (x + n, x)[j]
+							if (xi > -1 and yi > -1 and
+								xi < clutres and yi < clutres):
+								RGBn = grid[yi][xi]
+								for k in xrange(3):
+									RGB[k].append(RGBn[k] * 0.5 +
+												  RGB[k][0] * 0.5)
+							yi, xi = y - n, (x + n, x - n)[j]
+							if (xi > -1 and yi > -1 and
+								xi < clutres and yi < clutres):
+								RGBn = grid[yi][xi]
+								for k in xrange(3):
+									RGB[k].append(RGBn[k] * 0.5 +
+												  RGB[k][0] * 0.5)
+					grid[y][x] = [sum(v) / float(len(v)) for v in RGB]
+			for j, row in enumerate(grid):
+				itable.clut[i * clutres + j] = [[v for v in RGB]
+												for RGB in row]
+
+		if diagpng and filename:
+			itable.clut_writepng(fname + ".B2A%i.post.CLUT.extrasmooth.png" %
+								 tableno)
+
 		return True
 	
 	def get_device_id(self, quirk=True, use_serial_32=True,
