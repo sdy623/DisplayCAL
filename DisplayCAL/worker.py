@@ -6553,13 +6553,13 @@ usage: spotread [-options] [logfile]
 								profile.tags.B2A1 = profile.tags.B2A0
 						else:
 							gamap_profile = None
+				tables = []
 				if gamap_profile or (collink and profile.colorSpace != "RGB"):
 					size = getcfg("profile.b2a.hires.size")
 					# Make sure to map 'auto' value (-1) to an actual size
 					size = {-1: 33}.get(size, size)
 					collink_args = ["-v", "-q" + getcfg("profile.quality"),
 									"-G", "-r%i" % size]
-					tables = []
 					for tableno, cfgname in [(0, "gamap_perceptual"),
 											 (2, "gamap_saturation")]:
 						if getcfg(cfgname):
@@ -6643,12 +6643,38 @@ usage: spotread [-options] [logfile]
 							profchanged = True
 						else:
 							break
+				elif (getcfg("profile.b2a.hires") and
+					  getcfg("profile.b2a.hires.smooth") and gamap):
+					# Smooth existing B2A tables
+					linebuffered_logfiles = []
+					if sys.stdout.isatty():
+						linebuffered_logfiles.append(safe_print)
+					else:
+						linebuffered_logfiles.append(log)
+					if self.sessionlogfile:
+						linebuffered_logfiles.append(self.sessionlogfile)
+					logfiles = Files([LineBufferedStream(
+										FilteredStream(Files(linebuffered_logfiles),
+													   enc, discard="",
+													   linesep_in="\n", 
+													   triggers=[])), self.recent,
+										self.lastmsg])
+					smooth_tables = []
+					for tableno in (0, 2):
+						table = profile.tags.get("B2A%i" % tableno)
+						if table in smooth_tables:
+							continue
+						if self.smooth_B2A(profile, tableno,
+										   getcfg("profile.b2a.hires.diagpng") and 2,
+										   logfile=logfiles):
+							smooth_tables.append(table)
+							profchanged = True
 			if not isinstance(result, Exception) and result:
 				if (gamap_profile and
 					os.path.dirname(gamap_profile.fileName) == self.tempdir):
 					# Remove temporary source profile
 					os.remove(gamap_profile.fileName)
-				if profchanged:
+				if profchanged and tables:
 					# Make sure we match Argyll colprof i.e. have a complete
 					# set of tables
 					if profile.colorSpace != "RGB":
