@@ -7971,6 +7971,8 @@ class MainFrame(ReportFrame, BaseFrame):
 			profile = None
 			filename, ext = os.path.splitext(profile_path)
 			extra = []
+			cinfo = []
+			vinfo = []
 			has_cal = False
 			try:
 				profile = ICCP.ICCProfile(profile_path)
@@ -8041,40 +8043,30 @@ class MainFrame(ReportFrame, BaseFrame):
 							extra.append(u" %s %.2f" %
 										 (lang.getstr("profile.self_check.%s" %
 													  key), dE))
-					if extra:
-						extra.append("")
-						extra.append("")
-					for key, name in (("srgb", "sRGB"),
-									  ("adobe-rgb", "Adobe RGB")):
+					gamuts = (("srgb", "sRGB", ICCP.GAMUT_VOLUME_SRGB),
+							  ("adobe-rgb", "Adobe RGB", ICCP.GAMUT_VOLUME_ADOBERGB),
+							  ("dci-p3", "DCI P3", ICCP.GAMUT_VOLUME_SMPTE431_P3))
+					for key, name, volume in gamuts:
 						try:
 							gamut_coverage = float(profile.tags.meta.getvalue("GAMUT_coverage(%s)" % key))
 						except (TypeError, ValueError):
 							gamut_coverage = None
 						if gamut_coverage:
-							if not lang.getstr("gamut.coverage") + ":" in extra:
-								if extra:
-									extra.append("")
-								extra.append(lang.getstr("gamut.coverage") + ":")
-							extra.append(" %.1f%% %s" % (gamut_coverage * 100,
-														 name))
+							cinfo.append("%.1f%% %s" % (gamut_coverage * 100,
+														name))
 					try:
 						gamut_volume = float(profile.tags.meta.getvalue("GAMUT_volume"))
 					except (TypeError, ValueError):
 						gamut_volume = None
 					if gamut_volume:
-						gamut_volumes = {"srgb": ICCP.GAMUT_VOLUME_SRGB,
-										 "adobe-rgb": ICCP.GAMUT_VOLUME_ADOBERGB}
-						for key, name in (("srgb", "sRGB"),
-										  ("adobe-rgb", "Adobe RGB")):
-							if not lang.getstr("gamut.volume") + ":" in extra:
-								if extra:
-									extra.append("")
-								extra.append(lang.getstr("gamut.volume") + ":")
-							extra.append(" %.1f%% %s" %
+						for key, name, volume in gamuts:
+							vinfo.append("%.1f%% %s" %
 										 (gamut_volume *
 										  ICCP.GAMUT_VOLUME_SRGB /
-										  gamut_volumes[key] * 100,
+										  volume * 100,
 										  name))
+							if len(vinfo) == len(cinfo):
+								break
 			if config.is_virtual_display() or install_3dlut:
 				installable = False
 				title = appname
@@ -8129,6 +8121,29 @@ class MainFrame(ReportFrame, BaseFrame):
 								cancel=cancel, 
 								bitmap=geticon(32, appname + "-profile-info"),
 								alt=share_profile)
+			if cinfo or vinfo:
+				gamut_info_sizer = wx.FlexGridSizer(2, 2, 0, 24)
+				dlg.sizer3.Add(gamut_info_sizer, flag=wx.TOP, border=14)
+				if cinfo:
+					label = wx.StaticText(dlg, -1, lang.getstr("gamut.coverage"))
+					font = label.GetFont()
+					font.SetWeight(wx.BOLD)
+					label.SetFont(font)
+					gamut_info_sizer.Add(label)
+				if vinfo:
+					label = wx.StaticText(dlg, -1, lang.getstr("gamut.volume"))
+					font = label.GetFont()
+					font.SetWeight(wx.BOLD)
+					label.SetFont(font)
+				else:
+					label = (1, 1)
+				gamut_info_sizer.Add(label)
+				if cinfo:
+					gamut_info_sizer.Add(wx.StaticText(dlg, -1,
+													   "\n".join(cinfo)))
+				if vinfo:
+					gamut_info_sizer.Add(wx.StaticText(dlg, -1,
+													   "\n".join(vinfo)))
 			self.modaldlg = dlg
 			if share_profile:
 				# Show share profile button
@@ -8143,7 +8158,7 @@ class MainFrame(ReportFrame, BaseFrame):
 				dlg.Bind(wx.EVT_CHECKBOX, self.preview_handler, 
 						 id=self.preview.GetId())
 				dlg.sizer3.Add(self.preview, flag=wx.TOP | wx.ALIGN_LEFT, 
-							   border=12)
+							   border=14)
 				if LUTFrame and not ProfileInfoFrame:
 					# Disabled, use profile information window instead
 					self.show_lut = wx.CheckBox(dlg, -1, 
@@ -8158,7 +8173,7 @@ class MainFrame(ReportFrame, BaseFrame):
 						self.init_lut_viewer(profile=profile, 
 											 show=getcfg("lut_viewer.show"))
 			else:
-				dlg.sizer3.Add((0, 8))
+				dlg.sizer3.Add((0, 10))
 			self.show_profile_info = wx.CheckBox(dlg, -1,
 												 lang.getstr("profile.info.show"))
 			dlg.Bind(wx.EVT_CHECKBOX, self.profile_info_handler, 
@@ -8186,7 +8201,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							 self.profile_load_on_login_handler, 
 							 id=self.profile_load_on_login.GetId())
 					dlg.sizer3.Add(self.profile_load_on_login, 
-								   flag=wx.TOP | wx.ALIGN_LEFT, border=12)
+								   flag=wx.TOP | wx.ALIGN_LEFT, border=14)
 					dlg.sizer3.Add((1, 4))
 					if (sys.platform == "win32" and
 						sys.getwindowsversion() >= (6, 1)):
@@ -8225,7 +8240,7 @@ class MainFrame(ReportFrame, BaseFrame):
 							 self.install_profile_scope_handler, 
 							 id=self.install_profile_user.GetId())
 					dlg.sizer3.Add(self.install_profile_user, 
-								   flag=wx.TOP | wx.ALIGN_LEFT, border=8)
+								   flag=wx.TOP | wx.ALIGN_LEFT, border=10)
 					self.install_profile_systemwide = wx.RadioButton(
 						dlg, -1, lang.getstr("profile.install_local_system"))
 					self.install_profile_systemwide.SetValue(

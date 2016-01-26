@@ -78,8 +78,11 @@ elif sys.platform == "darwin":
 	from util_mac import osascript
 
 
+# Gamut volumes in cubic colorspace units (L*a*b*) as reported by Argyll's 
+# iccgamut
 GAMUT_VOLUME_SRGB = 833675.435316  # rel. col.
 GAMUT_VOLUME_ADOBERGB = 1209986.014983  # rel. col.
+GAMUT_VOLUME_SMPTE431_P3 = 1176953.485921  # rel. col.
 
 # http://msdn.microsoft.com/en-us/library/dd371953%28v=vs.85%29.aspx
 COLORPROFILESUBTYPE = {"NONE": 0x0000,

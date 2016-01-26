@@ -8907,7 +8907,8 @@ usage: spotread [-options] [logfile]
 		tmpfilenames = [gamfilename, wrlfilename]
 		if compare_standard_gamuts:
 			comparison_gamuts = [("srgb", "sRGB"),
-								 ("adobe-rgb", "ClayRGB1998")]
+								 ("adobe-rgb", "ClayRGB1998"),
+								 ("dci-p3", "SMPTE431_P3")]
 		else:
 			comparison_gamuts = []
 		for profile_path in profile_paths[1:]:
