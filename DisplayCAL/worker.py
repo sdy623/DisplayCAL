@@ -4473,9 +4473,11 @@ while 1:
 				odata.insert(0, [0, 0, 0])
 			wY = idata[-1][1]
 			oXYZ = idata = [[n / wY for n in v] for v in idata]
+			D50 = colormath.get_whitepoint("D50")
+			fpL = [cm.XYZ2Lab(*v + [D50])[0] for v in oXYZ]
 		else:
 			oXYZ = [colormath.Lab2XYZ(*v) for v in idata]
-		fpL = [v[0] for v in idata]
+			fpL = [v[0] for v in idata]
 		fpX = [v[0] for v in oXYZ]
 		fpY = [v[1] for v in oXYZ]
 		fpZ = [v[2] for v in oXYZ]
@@ -4767,14 +4769,20 @@ while 1:
 					   colormath.Interp(rY, xpG),
 					   colormath.Interp(rZ, xpB))
 		else:
-			maxL = 100.0 + 25500.0 / 65280.0
-			Labbp = colormath.XYZ2Lab(*[v * 100 for v in XYZbp])
-			oldmin = 0.0
-			oldmax = 1.0
+			Lscale = 65280.0 / 65535.0
+			oldmin = (xpR[0] + xpG[0] + xpB[0]) / 3.0
+			oldmax = (xpR[-1] + xpG[-1] + xpB[-1]) / 3.0
 			oldrange = oldmax - oldmin
 			newmin = 0.0
-			newmax = maxL / 100
+			newmax = 100
 			newrange = newmax - newmin
+			xpL = []
+			for i in vrange:
+				v = (xpR[i] + xpG[i] + xpB[i]) / 3.0
+				v = max((((v - oldmin) * newrange) / oldrange) + newmin, 0)
+				xpL.append(v)
+			Linterp = colormath.Interp(xpL, fpL)
+			rLinterp = colormath.Interp(fpL, xpL)
 		# Set input curves
 		# Apply inverse TRC to input values to distribute them
 		# optimally across cLUT grid points
@@ -4788,10 +4796,7 @@ while 1:
 				v = [rinterp[i](j / maxval) for i in xrange(3)]
 			else:
 				# CIELab PCS encoding
-				l = (((j / maxval - oldmin) * newrange) / oldrange) + newmin
-				if l < Labbp[0] / 100:
-					l = 0
-				v = [l]
+				v = [rLinterp(j / (maxval * Lscale) * 100) / 100.0]
 				v.extend([j / maxval] * 2)
 			for i in xrange(len(itable.input)):
 				itable.input[i].append(min(v[i] * 65535, 65535))
@@ -4868,7 +4873,8 @@ while 1:
 														  profile.tags.wtpt.ir.values()])
 						else:
 							# Legacy CIELAB
-							v = d * 100, -128 + e * abmaxval, -128 + f * abmaxval
+							L = Linterp(d * 100)
+							v = L, -128 + e * abmaxval, -128 + f * abmaxval
 						idata.append("%.6f %.6f %.6f" % tuple(v))
 						# Lookup CIE -> device values through profile using xicclu
 						if not use_cam_clipping or (a <= threshold and
