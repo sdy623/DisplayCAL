@@ -559,8 +559,10 @@ class BaseApp(wx.App):
 
 	def ExitMainLoop(self):
 		BaseApp._mainloopexit = True
-		if self.TopWindow:
+		try:
 			self.TopWindow.listening = False
+		except:
+			pass
 		BaseApp._run_exitfuncs()
 		return wx.App.ExitMainLoop(self)
 
