@@ -80,6 +80,7 @@ def replace_placeholders(tmpl_path, out_path, lastmod_time=0, iterable=None):
 			strftime("%H:%M", 
 					 gmtime(lastmod_time or 
 							os.stat(tmpl_path).st_mtime)),
+		"TIMESTAMP": str(int(lastmod_time)),
 		"SUMMARY": description,
 		"DESC": longdesc,
 		"APPDATADESC": "<p>\n\t\t\t" + longdesc.replace("\n", "\n\t\t\t").replace(".\n", ".\n\t\t</p>\n\t\t<p>\n") + "\n\t\t</p>",
@@ -411,10 +412,31 @@ def setup():
 	if ((appdata or 
 		 "install" in sys.argv[1:]) and 
 		not help and not dry_run):
+		from setup import get_scripts
+		import localization as lang
+		scripts = get_scripts()
+		provides = ["<python2>%s</python2>" % name]
+		for script, desc in scripts:
+			provides.append("<binary>%s</binary>" % script)
+		provides = "\n\t\t".join(provides)
+		lang.init()
+		languages = []
+		for code, tdict in lang.ldict.iteritems():
+			if code == "en":
+				continue
+			untranslated = 0
+			for key in tdict:
+				if key.startswith("*") and key != "*":
+					untranslated += 1
+			languages.append('<lang percentage="%i">%s</lang>' %
+							 (round((1 - untranslated / (len(tdict) - 1.0)) * 100),
+							 code))
+		languages = "\n\t\t".join(languages)
 		tmpl_name = name + ".appdata.xml"
 		replace_placeholders(os.path.join(pydir, "misc", tmpl_name),
 							 os.path.join(pydir, "dist", tmpl_name),
-							 lastmod_time)
+							 lastmod_time, {"APPDATAPROVIDES": provides,
+											"LANGUAGES": languages})
 	if appdata:
 		sys.argv.remove("appdata")
 
