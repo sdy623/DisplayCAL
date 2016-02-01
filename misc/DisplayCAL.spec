@@ -141,11 +141,11 @@ fi
 desktopfilenames=`%{__python} -c "import glob
 import os
 print ' '.join([os.path.splitext(os.path.basename(path))[0] for path in
-				glob.glob('misc/%{name}*.desktop')])"`
+				glob.glob('misc/${APPNAME_LOWER}*.desktop')])"`
 for desktopfilename in $desktopfilenames ; do
 	%suse_update_desktop_file $desktopfilename 2DGraphics
 done
-%suse_update_desktop_file "%{buildroot}/etc/xdg/autostart/z-%{name}-apply-profiles.desktop"
+%suse_update_desktop_file "%{buildroot}/etc/xdg/autostart/z-${APPNAME_LOWER}-apply-profiles.desktop"
 %endif
 # Remove unused files from list of installed files and add directories
 # as well as mark files as executable where needed
@@ -180,7 +180,7 @@ f.close()"
 
 %files -f INSTALLED_FILES
 %defattr(-,root,root)
-%config /etc/xdg/autostart/z-%{name}-apply-profiles.desktop
+%config /etc/xdg/autostart/z-${APPNAME_LOWER}-apply-profiles.desktop
 %doc LICENSE.txt
 %doc README.html
 %doc screenshots
