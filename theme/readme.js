@@ -142,7 +142,7 @@ jQuery(function ($) {
 	$('#content p > br').after('<span class="indent"></span>')
 
 	/* Intro */
-	if ($(window).width() >= 760 &&
+	if (location.pathname != '/history.html' && $(window).width() >= 760 &&
 		(location.protocol != 'file:' ||
 		 (location.search || '').indexOf('debug') > -1 ||
 		 (document.cookie || '').indexOf('debug') > -1) &&
@@ -216,11 +216,11 @@ jQuery(function ($) {
 	/* Only show 'to top' link if scroll position > ToC offset top */
 	var totop_isshown = false;
 	$(window).scroll(function () {
-		if (totop_isshown && $(window).scrollTop() < $('#toc').offset().top) {
+		if (totop_isshown && $(window).scrollTop() < $('#content').offset().top) {
 			$('#totop').slideUp();
 			totop_isshown = false;
 		}
-		else if (!totop_isshown && $(window).scrollTop() > $('#toc').offset().top) {
+		else if (!totop_isshown && $(window).scrollTop() > $('#content').offset().top) {
 			$('#totop').slideDown();
 			totop_isshown = true;
 		}
