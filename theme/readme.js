@@ -131,10 +131,10 @@ jQuery(function ($) {
 	});
 
 	/* Track outbound links */
-	if (location.protocol != 'file:') $('a[href^="http://"]:not([href^="http://displaycal.net"], [href^="http://hub.displaycal.net"], [href^="http://colorimetercorrections.displaycal.net"]), a[href^="https://"]:not([href^="https://displaycal.net"], [href^="https://hub.displaycal.net"], [href^="https://colorimetercorrections.displaycal.net"])').each(function () {
+	if (location.protocol != 'file:') $('a[href^="http://"]:not([href^="http://' + location.hostname + '"], [href^="http://hub.' + location.hostname + '"], [href^="http://colorimetercorrections.' + location.hostname + '"]), a[href^="https://"]:not([href^="https://' + location.hostname + '"], [href^="https://hub.' + location.hostname + '"], [href^="https://colorimetercorrections.' + location.hostname + '"])').each(function () {
 		this.target = "_blank";
-	}).click(function () {
-		$.get(location.protocol + "//outbound.displaycal.net/" + this.hostname + this.pathname);
+	}).on('mouseup', function (e) {
+		if (e.which <= 2) $.get(location.protocol + '//outbound.' + location.hostname + '/' + this.hostname + this.pathname);
 		return true;
 	});
 	
