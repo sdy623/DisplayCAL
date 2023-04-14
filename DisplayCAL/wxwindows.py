@@ -2692,6 +2692,56 @@ class BitmapBackgroundPanelText(BitmapBackgroundPanel):
 			dc.SetTextForeground(color)
 			dc.DrawText(line, x, y)
 
+class BitmapBackgroundPanelTextGamut(BitmapBackgroundPanelText):
+
+	"""A panel with a background bitmap and text label to display gamut"""
+
+	def __init__(self, *args, **kwargs):
+		BitmapBackgroundPanel.__init__(self, *args, **kwargs)
+		self.title = lang.getstr("gamut.coverage")
+		self.caption = lang.getstr("gamut.coverage")
+		self.label_x = None
+		self.label_y = None
+		self.textalpha = 1.0
+		self.textshadow = True
+		self.textshadowcolor = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DLIGHT)
+		self.use_gcdc = False
+		self._label = ""
+
+	def _draw(self, dc):
+		BitmapBackgroundPanel._draw(self, dc)
+		dc.SetBackgroundMode(wx.TRANSPARENT)
+		dc = self._set_font(dc)
+		label = self.Label.splitlines()
+		for i, line in enumerate(label):
+			w1, h1 = self.GetTextExtent(line)
+			w2, h2 = dc.GetTextExtent(line)
+			if self.label_x is None:
+				w = (max(w1, w2) - min(w1, w2)) / 2.0 + min(w1, w2)
+				x = self.GetSize()[0] / 2.0 - w / 2.0
+			else:
+				x = self.label_x
+			h = (max(h1, h2) - min(h1, h2)) / 3.0 + min(h1, h2)
+			if self.label_y is None:
+				y = self.GetSize()[1] / 3.0 - h / 3.0
+			else:
+				y = self.label_y + h * i
+			if self.textshadow:
+				dc.SetTextForeground(self.textshadowcolor)
+				dc.DrawText(line, x + 1, y + 1)
+			color = self.GetForegroundColour()
+			if self.textalpha < 1:
+				bgcolor = self.BackgroundColour
+				bgblend = (1.0 - self.textalpha)
+				blend = self.textalpha
+				color = wx.Colour(int(round(bgblend * bgcolor.Red() +
+											blend * color.Red())),
+								  int(round(bgblend * bgcolor.Green() +
+											blend * color.Green())),
+								  int(round(bgblend * bgcolor.Blue() +
+											blend * color.Blue())))
+			dc.SetTextForeground(color)
+			dc.DrawText(line, x, y)
 
 class ConfirmDialog(BaseInteractiveDialog):
 
@@ -3925,7 +3975,7 @@ class CustomGrid(wx.grid.Grid):
 				# bitmaps are no longer valid and are garbage collected
 				cell_renderer._selectionbitmaps = {}
 		event.Skip()
-        
+		
 	def SetColLabelRenderer(self, col, renderer):
 		"""
 		Register a renderer to be used for drawing the label for the
@@ -4715,7 +4765,7 @@ fancytext.RenderToRenderer = fancytext_RenderToRenderer
 class BetterPyGauge(pygauge.PyGauge):
 
 	def __init__(self, parent, id=wx.ID_ANY, range=100, pos=wx.DefaultPosition,
-                 size=(-1,30), style=0, pd=None):
+				 size=(-1,30), style=0, pd=None):
 		self.pd = pd
 		self.dpiscale = getcfg("app.dpi") / get_default_dpi()
 		if self.dpiscale > 1:
@@ -4981,7 +5031,7 @@ class BetterStaticFancyText(BetterStaticFancyTextBase, GenStaticBitmap):
 
 	def GetFont(self):
 		return fancytext.Renderer._font or wx.SystemSettings_GetFont(wx.SYS_DEFAULT_GUI_FONT)
-    
+	
 	def OnPaint(self, event):
 		if sys.platform != "win32":
 			# AutoBufferedPaintDCFactory is the magic needed for crisp text
@@ -5494,11 +5544,11 @@ class ProgressDialog(wx.Dialog):
 									   size=(-1, 4), pd=self)
 			self.gauge.BackgroundColour = "#003366"
 			self.gauge.SetBarGradients([("#0099CC", "#00CCFF"),
-									    ("#0088BB", "#00BBEE"),
-									    ("#0077AA", "#00AADD"),
-									    ("#006699", "#0099CC"),
-									    ("#0077AA", "#00AADD"),
-									    ("#0088BB", "#00BBEE")])
+										("#0088BB", "#00BBEE"),
+										("#0077AA", "#00AADD"),
+										("#006699", "#0099CC"),
+										("#0077AA", "#00AADD"),
+										("#0088BB", "#00BBEE")])
 			self.gauge.SetIndeterminateBarGradients([("#00CCFF", "#001144"),
 													 ("#00BBEE", "#002255"),
 													 ("#00AADD", "#003366"),
@@ -5662,7 +5712,7 @@ class ProgressDialog(wx.Dialog):
 	def OnMove(self, event):
 		if self.IsShownOnScreen() and not self.IsIconized() and \
 		   (not self.GetParent() or
-		    not self.GetParent().IsShownOnScreen()):
+			not self.GetParent().IsShownOnScreen()):
 			prev_x = getcfg("position.progress.x")
 			prev_y = getcfg("position.progress.y")
 			x, y = self.GetScreenPosition()
@@ -6204,7 +6254,7 @@ class SimpleTerminal(InvincibleFrame):
 	def OnMove(self, event):
 		if self.IsShownOnScreen() and not self.IsIconized() and \
 		   (not self.GetParent() or
-		    not self.GetParent().IsShownOnScreen()):
+			not self.GetParent().IsShownOnScreen()):
 			prev_x = getcfg("position.progress.x")
 			prev_y = getcfg("position.progress.y")
 			x, y = self.GetScreenPosition()
@@ -6633,7 +6683,7 @@ class TooltipWindow(InvincibleFrame):
 	def __init__(self, parent=None, id=-1, title=appname, msg="", cols=1,
 				 bitmap=None, pos=(-1, -1), size=(400, -1), 
 				 style=(wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW |
-					    wx.FRAME_FLOAT_ON_PARENT) &
+						wx.FRAME_FLOAT_ON_PARENT) &
 					   ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX), wrap=70,
 				 use_header=True, show=True, scrolled=False):
 		scale = getcfg("app.dpi") / get_default_dpi()
@@ -6744,7 +6794,7 @@ class TwoWaySplitter(FourWaySplitter):
 
 		return self._sashbitmap.GetSize()[0]
 
-    # Recompute layout
+	# Recompute layout
 	def _SizeWindows(self):
 		"""
 		Recalculate the layout based on split positions and split fractions.
@@ -7116,7 +7166,7 @@ def get_toplevel_window(id_name_label):
 def is_scripting_allowed(win, child):
 	return (child and child.TopLevelParent is win and
 			child.IsShownOnScreen() and
-		    isinstance(child, (CustomCheckBox, aui.AuiNotebook,
+			isinstance(child, (CustomCheckBox, aui.AuiNotebook,
 							   labelbook.FlatBookBase,  wx.Control, wx.Notebook,
 							   wx.grid.Grid)) and
 			not isinstance(child, (SimpleBook, aui.AuiTabCtrl,
@@ -7213,12 +7263,12 @@ def get_appid_from_window_hierarchy(toplevelwindow):
 		frame = get_parent_frame(toplevelwindow)
 	base_appid = appname.lower()
 	return {"lut3dframe": base_appid + "-3dlut-maker",
-		    "lut_viewer": base_appid + "-curve-viewer",
-		    "profile_info": base_appid + "-profile-info",
-		    "scriptingframe": base_appid + "-scripting-client",
-		    "synthiccframe": base_appid + "-synthprofile",
-		    "tcgen": base_appid + "-testchart-editor",
-		    "vrml2x3dframe": base_appid + "-vrml-to-x3d-converter"}.get(frame and
+			"lut_viewer": base_appid + "-curve-viewer",
+			"profile_info": base_appid + "-profile-info",
+			"scriptingframe": base_appid + "-scripting-client",
+			"synthiccframe": base_appid + "-synthprofile",
+			"tcgen": base_appid + "-testchart-editor",
+			"vrml2x3dframe": base_appid + "-vrml-to-x3d-converter"}.get(frame and
 																		frame.Name,
 																		base_appid)
 

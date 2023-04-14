@@ -25,7 +25,8 @@ from worker import (Error, UnloggedError, UnloggedInfo, Worker, get_argyll_util,
 from wxaddons import get_platform_window_decoration_size, wx
 from wxMeasureFrame import MeasureFrame
 from wxwindows import (BaseApp, BaseFrame, BitmapBackgroundPanelText,
-					   CustomCheckBox, FileDrop, InfoDialog, TooltipWindow)
+					   BitmapBackgroundPanelTextGamut, CustomCheckBox, 
+					   FileDrop, InfoDialog, TooltipWindow)
 from wxfixes import GenBitmapButton as BitmapButton, wx_Panel
 import colormath
 import config
@@ -756,6 +757,7 @@ class LUTFrame(BaseFrame):
 		self.sizer.Add(self.box_panel, flag=wx.EXPAND)
 		
 		self.status = BitmapBackgroundPanelText(self, name="statuspanel")
+		self.gamut_status = BitmapBackgroundPanelTextGamut(self, name="statuspanel")
 		self.status.SetMaxFontSize(11)
 		self.status.label_y = 8
 		self.status.textshadow = False
@@ -2005,6 +2007,10 @@ class LUTFrame(BaseFrame):
 		self.status.Label = text
 		self.status.Refresh()
 	
+	def SetGamutStatusText(self, text):
+		self.gamut_status.Label = text
+		self.status.Refresh()
+
 	def UpdatePointLabel(self, xy):
 		if self.client.GetEnablePointLabel():
 			# Show closest point (when enbled)
